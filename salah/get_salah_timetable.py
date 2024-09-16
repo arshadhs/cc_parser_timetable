@@ -1,8 +1,16 @@
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
-from moonsighting import get_prayer_table
+from moonsighting import get_prayer_table, get_prayer_table_offline
 import datetime
 import argparse
+
+COLOUR_BLUE = "add8e6"
+COLOR_P_BLUE = "1e7ba0"
+COLOR_S_BLUE = "0a2842"
+
+COLOUR_GREY = "dbdbdb"
+COLOR_L_GREY = "6e6e6e" # "ADD8E6"      # HEADER
+COLOR_D_GREY = "474747" #"72bcd4"
 
 class Salah(object):
     def __init__(self, name, date, start, details, has_jamat=True, fill_color=None, header_color=None):
@@ -21,16 +29,32 @@ class Salah(object):
         self.color_me = fill_color is not None
         self.is_juma = self.week_day.lower().startswith('fri')
         if self.is_juma:
-            self.fill_color = PatternFill("solid", fgColor="FFCCFF")
+            self.fill_color = PatternFill("solid", fgColor=COLOUR_BLUE)
             self.color_me = True
     
     def get_jamat_time(self):
+        print ("self: ", self.start)
         hour = self.start[:2].strip(':')
-        min = int(self.start[-2:].strip(':'))
+        min = int(self.start[3:6].strip(':'))
 
         if self.name == "Isha":
-            if (int(hour) == 19 and min <= 45) or int(hour) < 19:
-                    return('19:45')
+            if (int(hour) == 19 and min <= 50) or int(hour) < 19:
+                    return('20:00')
+            else:
+                print("min: ", min)
+                if min > 45:
+                    new_hour = int(hour) + 1
+                    if len(str(new_hour)) == 1:
+                        new_hour = '0'+str(new_hour)
+                    return(str(new_hour)+':00')
+                elif min > 30 and min <= 45:
+                    return(str(hour)+':45')
+                elif min > 15 and min <= 30:
+                    return(str(hour)+':30')
+                elif min > 0 and min <= 15:
+                    return(str(hour)+':15')
+                else:
+                    return(self.start[:5])
 
         if self.name == "Fajr":
             fajr_hour = self.sunrise[:2].strip(':')
@@ -246,8 +270,8 @@ class JumaSalah(Salah):
 
 
 def salah_org(table):
-    fill_grn = PatternFill("solid", fgColor="99FF99")
-    header_color = PatternFill("solid", fgColor="009900")
+    fill_grn = PatternFill("solid", fgColor=COLOUR_GREY)
+    header_color = PatternFill("solid", fgColor=COLOR_L_GREY)
     for row, (date, day) in enumerate(table['schedule'].items(), start=1):
         fill_color = fill_grn if row % 2 != 0 else None
         Fajr, Sunrise, Juma, Dhuhr, Asr, Maghrib, Isha = day.values()
@@ -257,6 +281,8 @@ def salah_org(table):
         day['Asr'] = Salah('Asr', date, Asr, day, has_jamat=False, fill_color=fill_color, header_color=header_color)
         day['Maghrib'] = Salah('Maghrib', date, Maghrib, day, has_jamat=True, fill_color=fill_color, header_color=header_color)
         day['Isha'] = Salah('Isha', date, Isha, day, has_jamat=True, fill_color=fill_color, header_color=header_color)
+        
+#    print (table)
     return table
 
 
@@ -265,17 +291,17 @@ def generate_xl(table, year):
     wb = Workbook()
     wb['Sheet'].title = 'CC booking'
     ws = wb['CC booking']
-    fill_color = PatternFill("solid", fgColor="99FF99")
-    header_color = PatternFill("solid", fgColor="009900")
+    fill_color = PatternFill("solid", fgColor=COLOUR_GREY)
+    header_color = PatternFill("solid", fgColor=COLOR_L_GREY)
     row = 1
     # Add each day rows
     for serial_no, (date, day) in enumerate(table['schedule'].items(), start=1):
         week_day = date.split(' ')[2].strip()
         is_juma = week_day[:3].lower() == 'fri'
         if is_juma:
-            fill_color = PatternFill("solid", fgColor="FFCCFF")
+            fill_color = PatternFill("solid", fgColor=COLOUR_BLUE)
         else:
-            fill_color = PatternFill("solid", fgColor="99FF99")
+            fill_color = PatternFill("solid", fgColor=COLOUR_GREY)
         color_me = fill_color if is_juma or serial_no % 2 != 0 else None
         if int(date.split(' ')[1].strip()) == 1:
             # Add top header
@@ -341,8 +367,10 @@ def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--year', dest='year',
                     default='None', help='Year of salah timetable')
+    parser.add_argument('--file', dest='filename',
+                    default='None', help='XLS file for timetable')
     args = parser.parse_args()
-    table = get_prayer_table(args.year)
+    table = get_prayer_table_offline(args.year, args.filename)
     generate_xl(table, args.year)
 
 
