@@ -22,10 +22,10 @@ class Salah(object):
         self.fill_color = fill_color
         self.header_color = header_color
         self.sunrise = self.details['Sunrise']
+        self.week_day = date.split(' ')[2].strip()
+        self.location = ''
         self.jamat = str(self.get_jamat_time()) # nearest 5th of a minute
         self.booking_start = self.get_booking_time_slot()
-        self.location = ''
-        self.week_day = date.split(' ')[2].strip()
         self.color_me = fill_color is not None
         self.is_juma = self.week_day.lower().startswith('fri')
         if self.is_juma:
@@ -35,6 +35,18 @@ class Salah(object):
     def get_jamat_time(self):
         hour = self.start[:2].strip(':')
         min = int(self.start[-2:].strip(':'))
+
+        if self.name == "Dhuhr":
+            if self.week_day == "Fri":
+                self.location == "HUB"
+                if int(hour) == 13 and min > 8:
+                    return('13:15')
+                elif int(hour) == 13:
+                    return('13:10')
+                else:
+                    return('13:05')
+            else:
+                return ""
 
         # If "Maghrib" is before 6 pm, then no congregation or booking
         if self.name == "Maghrib":
@@ -123,6 +135,9 @@ class Salah(object):
 
         if self.jamat == "":
             return None
+
+        if self.name == "Dhuhr" and self.week_day == "Fri":
+            return("13:00-14:00")
 
         hour = self.jamat[:2].strip(':')
         min = self.jamat[-2:].strip(':')
@@ -306,10 +321,11 @@ def salah_org(table):
     header_color = PatternFill("solid", fgColor=COLOR_L_GREY)
     for row, (date, day) in enumerate(table['schedule'].items(), start=1):
         fill_color = fill_grn if row % 2 != 0 else None
+#        Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = day.values()
         Fajr, Sunrise, Juma, Dhuhr, Asr, Maghrib, Isha = day.values()
         day['Fajr'] = FajrSalah(date, Fajr, day, fill_color=fill_color, header_color=header_color)
-        day['Dhuhr'] = Salah('Dhuhr', date, Dhuhr, day, has_jamat=False, fill_color=fill_color, header_color=header_color)
-        day['Juma'] = JumaSalah(date, Juma, day, has_jamat=True, fill_color=fill_color, header_color=header_color)
+        day['Dhuhr'] = Salah('Dhuhr', date, Dhuhr, day, has_jamat=True, fill_color=fill_color, header_color=header_color)
+#        day['Juma'] = JumaSalah(date, Juma, day, has_jamat=True, fill_color=fill_color, header_color=header_color)
         day['Asr'] = Salah('Asr', date, Asr, day, has_jamat=False, fill_color=fill_color, header_color=header_color)
         day['Maghrib'] = Salah('Maghrib', date, Maghrib, day, has_jamat=True, fill_color=fill_color, header_color=header_color)
         day['Isha'] = Salah('Isha', date, Isha, day, has_jamat=True, fill_color=fill_color, header_color=header_color)
@@ -394,17 +410,18 @@ def generate_xl(table, year):
                 col = salah.add_xl_columns(ws, row, col)
         row += 1
     outFile = 'Cambourne_salah_timetable_'+year+'.xlsx'
-    if not_in_use(outFile):
-        wb.save(outFile)
-        print("\nWritten to", outFile)
-    else:
-        print("\nError[13]: Permission denied", outFile)
+    wb.save(outFile)
+    # if not_in_use(outFile):
+        # wb.save(outFile)
+        # print("\nWritten to", outFile)
+    # else:
+        # print("\nError[13]: Permission denied", outFile)
 
 def not_in_use(filename):
         try:
             os.rename(filename,filename)
             return True
-        except:    
+        except:
             return False
 
 def main():
