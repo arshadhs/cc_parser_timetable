@@ -33,15 +33,18 @@ class Salah(object):
             self.color_me = True
     
     def get_jamat_time(self):
-        print ("self: ", self.start)
         hour = self.start[:2].strip(':')
-        min = int(self.start[3:6].strip(':'))
+        min = int(self.start[-2:].strip(':'))
+
+        # If "Maghrib" is before 6 pm, then no congregation or booking
+        if self.name == "Maghrib":
+            if(int(hour) < 18):
+                return ""
 
         if self.name == "Isha":
             if (int(hour) == 19 and min <= 50) or int(hour) < 19:
                     return('20:00')
             else:
-                print("min: ", min)
                 if min > 45:
                     new_hour = int(hour) + 1
                     if len(str(new_hour)) == 1:
@@ -59,18 +62,32 @@ class Salah(object):
         if self.name == "Fajr":
             fajr_hour = self.sunrise[:2].strip(':')
             fajr_min = int(self.sunrise[-2:].strip(':'))
-            if (int(fajr_hour) == 7 and fajr_min >= 15) or int(fajr_hour) >= 8:
+            
+            if int(hour) == 6 and int(min) > 15:
+                return('06:45')
+            elif int(hour) == 6:
                 return('06:30')
-            elif ((int(fajr_hour) == 7 and fajr_min < 15) or (int(fajr_hour) == 6 and fajr_min >= 45)):
-                return('06:00')
-            elif ((int(fajr_hour) == 6 and fajr_min < 45) or (int(fajr_hour) == 5 and fajr_min >= 45)):
-                return('05:30')
-            elif (int(fajr_hour) == 5 and fajr_min >= 30):
-                return('05:00')
-            elif (int(fajr_hour) == 5 and fajr_min < 30):
-                return('04:30')
-            elif (int(fajr_hour) == 4 and fajr_min >=30):
+            elif (int(hour) == 5 and (int(min) >= 45)):
+                return('06:30')
+            elif int(hour) == 2:
                 return('04:00')
+            elif fajr_min > 45:
+                return(str(fajr_hour)+':00')
+            elif (int(fajr_min) > 30 and fajr_min <= 45):
+                new_hour = int(fajr_hour) - 1
+                if len(str(new_hour)) == 1:
+                    new_hour = '0'+str(new_hour)
+                return(str(new_hour)+':45')
+            elif (int(fajr_min) > 15 and fajr_min <= 30):
+                new_hour = int(fajr_hour) - 1
+                if len(str(new_hour)) == 1:
+                    new_hour = '0'+str(new_hour)
+                return(str(new_hour)+':30')
+            elif (int(fajr_min) >= 00 and fajr_min <= 15):
+                new_hour = int(fajr_hour) - 1
+                if len(str(new_hour)) == 1:
+                    new_hour = '0'+str(new_hour)
+                return(str(new_hour)+':15')
 
         if min > 55:
             new_hour = int(hour) + 1
@@ -103,6 +120,10 @@ class Salah(object):
             return(self.start)
 
     def get_booking_time_slot(self):
+
+        if self.jamat == "":
+            return None
+
         hour = self.jamat[:2].strip(':')
         min = self.jamat[-2:].strip(':')
 
@@ -143,7 +164,7 @@ class Salah(object):
         self._style_header(ws, row, col)
         col += 1
         if self.has_jamat:
-            ws.cell(row, col).value = 'Booking_time_slot'
+            ws.cell(row, col).value = 'Booking'
             self._style_header(ws, row, col)
             col += 1
             ws.cell(row, col).value = 'Jamat'
@@ -217,6 +238,17 @@ class JumaSalah(Salah):
     def __init__(self, date, start, details, has_jamat=True, fill_color=None, header_color=None):
         super().__init__('Juma', date, start, details, has_jamat=has_jamat, fill_color=fill_color, header_color=header_color)
 
+    def get_jamat_time(self):
+        hour = self.start[:2].strip(':')
+        min = int(self.start[-2:].strip(':'))
+
+        if int(hour) == 13 and min > 8:
+            return('13:15')
+        elif int(hour) == 13:
+            return('13:10')
+        else:
+            return('13:05')
+
     def add_xl_header(self, ws, row, col):
         ws.cell(row, col).value = 'Start'
         self._style_header(ws, row, col)
@@ -224,7 +256,7 @@ class JumaSalah(Salah):
         ws.cell(row, col).value = 'Booking'
         self._style_header(ws, row, col)
         col += 1
-        ws.cell(row, col).value = 'Khutba begines'
+        ws.cell(row, col).value = 'khutba begines'
         self._style_header(ws, row, col)
         col += 1
         ws.cell(row, col).value = 'Location'
@@ -234,26 +266,26 @@ class JumaSalah(Salah):
 
     def add_xl_columns(self, ws, row, col):
         if self.is_juma:
-            ws.cell(row, col).value = "13:05"
+            ws.cell(row, col).value = self.get_jamat_time()       #Start
             if self.color_me:
                 ws.cell(row, col).fill = self.fill_color
             ws.cell(row, col).font = Font(bold=True)
             col += 1
-            ws.cell(row, col).value = "13:00"
+            ws.cell(row, col).value = "13:00-14:00"       # Booking
             if self.color_me:
                 ws.cell(row, col).fill = self.fill_color
             ws.cell(row, col).font = Font(bold=True)
             col += 1
-            ws.cell(row, col).value = "13:10"
+            ws.cell(row, col).value = "13:10"       # Khutba
             if self.color_me:
                 ws.cell(row, col).fill = self.fill_color
             ws.cell(row, col).font = Font(bold=True)
             col += 1
-            ws.cell(row, col).value = self.location
-            if self.color_me:
-                ws.cell(row, col).fill = self.fill_color
-            ws.cell(row, col).font = Font(bold=True)
-            col += 1
+            ws.cell(row, col).value = "HUB-H"
+            # if self.color_me:
+                # ws.cell(row, col).fill = self.fill_color
+            # ws.cell(row, col).font = Font(bold=True)
+            # col += 1
         else:
             if self.color_me:
                 ws.cell(row, col).fill = self.fill_color
@@ -262,8 +294,8 @@ class JumaSalah(Salah):
                 col += 1
                 ws.cell(row, col).fill = self.fill_color
                 col += 1
-                ws.cell(row, col).fill = self.fill_color
-                col += 1
+                # ws.cell(row, col).fill = self.fill_color
+                # col += 1
             else:
                 col += 4
         return col
@@ -319,15 +351,15 @@ def generate_xl(table, year):
             # Add Salah header
             row += 1
             col = 1
-            ws.cell(row, col).value = 'Sr. No.'
+            ws.cell(row, col).value = 'id'
             ws.cell(row, col).fill = header_color
             ws.cell(row, col).font = Font(bold=True, color='FFFFFF')
             col += 1
-            ws.cell(row, col).value = 'Date'
+            ws.cell(row, col).value = 'date'
             ws.cell(row, col).fill = header_color
             ws.cell(row, col).font = Font(bold=True, color='FFFFFF')
             col += 1
-            ws.cell(row, col).value = 'Day'
+            ws.cell(row, col).value = 'day'
             ws.cell(row, col).fill = header_color
             ws.cell(row, col).font = Font(bold=True, color='FFFFFF')
             col += 1
@@ -344,13 +376,14 @@ def generate_xl(table, year):
         if is_juma:
             ws.cell(row, col).font = Font(bold=True)
         col += 1
-        ws.cell(row, col).value = date
+        ws.cell(row, col).value = date[:-4]
         if color_me:
             ws.cell(row, col).fill = fill_color
         if is_juma:
             ws.cell(row, col).font = Font(bold=True)
         col += 1
         ws.cell(row, col).value = date.split(' ')[2]
+
         if color_me:
             ws.cell(row, col).fill = fill_color
         if is_juma:
@@ -360,8 +393,19 @@ def generate_xl(table, year):
             if isinstance(salah, Salah):
                 col = salah.add_xl_columns(ws, row, col)
         row += 1
-    wb.save('Cambourne_salah_timetable_'+year+'.xlsx')
+    outFile = 'Cambourne_salah_timetable_'+year+'.xlsx'
+    if not_in_use(outFile):
+        wb.save(outFile)
+        print("\nWritten to", outFile)
+    else:
+        print("\nError[13]: Permission denied", outFile)
 
+def not_in_use(filename):
+        try:
+            os.rename(filename,filename)
+            return True
+        except:    
+            return False
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
