@@ -1,7 +1,8 @@
 import json
-from typing import OrderedDict
 import requests
 import xmltodict
+from typing import OrderedDict
+from datetime import datetime
 from openpyxl import load_workbook, Workbook
 
 def get_prayer_table(year):
@@ -21,7 +22,7 @@ def get_prayer_table(year):
     schedule = OrderedDict()
     for day in elements['div']['table']['tbody']['tr']:
         date, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = day["td"]
-        schedule[date] = OrderedDict(Fajr=Fajr, Sunrise=Sunrise, Dhuhr=Dhuhr, Juma=Dhuhr, Asr=Asr, Maghrib=Maghrib, Isha=Isha)
+        schedule[date] = OrderedDict(Fajr=Fajr, Sunrise=Sunrise, Dhuhr=Dhuhr, Asr=Asr, Maghrib=Maghrib, Isha=Isha)
     data['schedule'] = schedule
     return data
 
@@ -38,7 +39,7 @@ def _get_sheet_from_hdr(wb, headers):
             break               
 
         if set(header).issuperset(headers):
-            print(f"Found xls '{sheet_name}'")
+#            print(f"Found xls '{sheet_name}'")
             return sheet
         else:
             print (set(header).difference(headers))
@@ -65,11 +66,24 @@ def get_prayer_table_offline(year, filename):
     if sheet:
         for row in sheet.iter_rows(min_row=2, max_col=7, values_only=True):
 
-            date, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = row[:7]
+            date_string, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = row[:7]
 #            print (row)
-            schedule[date] = OrderedDict(Fajr=str(Fajr), Sunrise=str(Sunrise), Dhuhr=str(Dhuhr), Juma=str(Dhuhr), Asr=str(Asr), Maghrib=str(Maghrib), Isha=str(Isha))
 
-#    for key, value in (schedule).items():
+            # Combine the year with the date string
+            full_date_string = f"{year} {date_string}"
+
+            # Convert the string to a datetime object using strptime
+            date_obj = datetime.strptime(full_date_string, '%Y %b %d %a').date()
+
+            schedule[date_obj] = OrderedDict(
+                                    Fajr=datetime.strptime(str(Fajr), '%H:%M:%S').time(),
+                                    Sunrise=datetime.strptime(str(Sunrise), '%H:%M:%S').time(),
+                                    Dhuhr=datetime.strptime(str(Dhuhr), '%H:%M:%S').time(),
+                                    Asr=datetime.strptime(str(Asr), '%H:%M:%S').time(),
+                                    Maghrib=datetime.strptime(str(Maghrib), '%H:%M:%S').time(),
+                                    Isha=datetime.strptime(str(Isha), '%H:%M:%S').time())
+
+    # for key, value in (schedule).items():
         # print ("key: ", key)
         # print ("value: ", type(schedule))
         # print ("value: ", type(value))
@@ -82,26 +96,3 @@ def get_prayer_table_offline(year, filename):
 
     data['schedule'] = schedule
     return data
-
-    # url = 'https://www.moonsighting.com/praytable.php'
-    # parameters = {'year': str(year), 'tz' : 'Europe/London', 'lat': '52.2178,', 'lon': '0.0662', 'method': '0', 'both': 'false', 'time': '0'}
-    # response = requests.get(url, params=parameters)
-    # if response.status_code != 200:
-        # raise Exception(f"Failed to get prayer time table from {url}")
-    # start = response.text.find('<div')
-    # end = response.text.rfind('</div>')
-    # xml_text = response.text[start:end+len('</div>')]
-    # elements = xmltodict.parse(xml_text)
-    # header = elements['div']['table']['thead']['tr']['th']
-    
-    
-    
-    # header[0] = 'Date'
-    # data = OrderedDict()
-    # data = {'header': header}
-    # schedule = OrderedDict()
-    # for day in elements['div']['table']['tbody']['tr']:
-        # date, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = day["td"]
-        # schedule[date] = OrderedDict(Fajr=Fajr, Sunrise=Sunrise, Dhuhr=Dhuhr, Juma=Dhuhr, Asr=Asr, Maghrib=Maghrib, Isha=Isha)
-    # data['schedule'] = schedule
-    # return data
