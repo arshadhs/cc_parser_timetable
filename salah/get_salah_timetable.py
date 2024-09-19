@@ -11,7 +11,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
 from moonsighting import get_prayer_table, get_prayer_table_offline
-from r_dates import get_ramadan_dates
+from ramadan_dates import get_ramadan_dates
 from configReader import get_config
 
 import datetime
