@@ -438,8 +438,9 @@ def generate_xl(table, year):
                 col = salah.add_xl_columns(ws, row, col)
         row += 1
 
-    outFile = 'Cambourne_salah_timetable_'+year+'.xlsx'
+    outFile = 'I:\\My Drive\\temp\\Cambourne_salah_timetable_'+year+'.xlsx'
     wb.save(outFile)
+    print("\nWritten to", outFile)
     # if not_in_use(outFile):
         # wb.save(outFile)
         # print("\nWritten to", outFile)
@@ -447,12 +448,12 @@ def generate_xl(table, year):
         # print("\nError[13]: Permission denied", outFile)
 
 
-def not_in_use(filename):
-        try:
-            os.rename(filename,filename)
-            return True
-        except:
-            return False
+# def not_in_use(filename):
+        # try:
+            # os.rename(filename,filename)
+            # return True
+        # except:
+            # return False
 
 # date format
 def displayTime(time):
@@ -463,9 +464,9 @@ usage = ""
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--year', dest='year',
-                    default='None', help='Year of salah timetable')
+                    default=datetime.datetime.now().year, help='Year of salah timetable')
     parser.add_argument('--file', dest='filename',
-                    default='None', help='XLS file for timetable')
+                    help='XLS file for timetable')
     parser.add_argument('--usage', dest='usage', type=str, choices=["booking", "web"],
                     default="web", help='booking or web')
     args = parser.parse_args()
@@ -474,15 +475,15 @@ def main():
     usage = args.usage
 
     # ToDo: module not returning expected results
-    ramadan_start, ramadan_end = get_ramadan_dates(int(args.year))
-    print(f"Ramadan in {args.year} starts on {ramadan_start} and ends on {ramadan_end}")
+    # ramadan_start, ramadan_end = get_ramadan_dates(int(args.year))
+    # print(f"Ramadan in {args.year} starts on {ramadan_start} and ends on {ramadan_end}")
 
-    # ToDo: hence using config file
+    # using config file
     ramadan_start, ramadan_end = get_config("config.ini", args.year)
     print(f"Ramadan in {args.year} starts on {ramadan_start} and ends on {ramadan_end}")
 
     # If the filename is supplied fetch the data from file, else from URL
-    if args.year is not None:
+    if args.filename is not None:
         table = get_prayer_table_offline(args.year, args.filename)
     else:
         table = get_prayer_table(args.year)

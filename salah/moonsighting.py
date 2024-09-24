@@ -14,6 +14,7 @@ def get_prayer_table(year):
     start = response.text.find('<div')
     end = response.text.rfind('</div>')
     xml_text = response.text[start:end+len('</div>')]
+#    print("xml_text: ", response.text)
     elements = xmltodict.parse(xml_text)
     header = elements['div']['table']['thead']['tr']['th']
     header[0] = 'Date'
@@ -34,8 +35,8 @@ def _get_sheet_from_hdr(wb, headers):
 
             for cell in row:
                 # print (cell.value)
-                # print (type(cell.value))
-                header.append(str(cell.value))
+                val = str(int(cell.value)) if isinstance(cell.value, float) else str(cell.value)
+                header.append(val)
             break               
 
         if set(header).issuperset(headers):
@@ -48,13 +49,13 @@ def _get_sheet_from_hdr(wb, headers):
     print('Failed to find the xls with timing information')
     return None
 
-def get_donation_sheet(filename):
+def get_donation_sheet(year, filename):
     iwb = load_workbook(filename, read_only=True)
-    return _get_sheet_from_hdr(iwb, {"2025", 'Fajr', 'Sunrise', 'Dhuhr', 'Asr(H)', 'Maghrib', 'Isha'})
+    return _get_sheet_from_hdr(iwb, {str(year), 'Fajr', 'Sunrise', 'Dhuhr', 'Asr(H)', 'Maghrib', 'Isha'})
 
 
 def get_prayer_table_offline(year, filename):
-    sheet = get_donation_sheet(filename)
+    sheet = get_donation_sheet(year, filename)
 
 #    print ("sheet: ", type(sheet))
     schedule = OrderedDict()
@@ -70,10 +71,11 @@ def get_prayer_table_offline(year, filename):
 #            print (row)
 
             # Combine the year with the date string
-            full_date_string = f"{year} {date_string}"
+            full_date_string = date_string# f"{year} {date_string}"
 
             # Convert the string to a datetime object using strptime
-            date_obj = datetime.strptime(full_date_string, '%Y %b %d %a').date()
+#            print("full_date_string: ", full_date_string)
+            date_obj = full_date_string.date()#datetime.strptime(full_date_string, '%Y %b %d %a').date()
 
             schedule[date_obj] = OrderedDict(
                                     Fajr=datetime.strptime(str(Fajr), '%H:%M:%S').time(),
