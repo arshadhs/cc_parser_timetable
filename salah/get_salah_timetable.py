@@ -11,7 +11,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
 from moonsighting import get_prayer_table, get_prayer_table_offline
-from ramadan_dates import get_ramadan_dates
+from r_dates import get_ramadan_dates
 from configReader import get_config
 
 import datetime
@@ -97,7 +97,7 @@ class Salah(object):
 
         if self.name == "Isha":
             if (int(hour) == 19 and min <= 50) or int(hour) < 19:
-                    return datetime.time(20, 00, 00)
+                    return datetime.time(20, 05, 00)
             else:
                 if min > 45:
                     new_hour = int(hour) + 1
@@ -438,7 +438,9 @@ def generate_xl(table, year):
                 col = salah.add_xl_columns(ws, row, col)
         row += 1
 
-    outFile = 'I:\\My Drive\\temp\\Cambourne_salah_timetable_'+year+'.xlsx'
+    setCellWidth(ws)
+
+    outFile = 'Cambourne_salah_timetable_'+year+'.xlsx'
     wb.save(outFile)
     print("\nWritten to", outFile)
     # if not_in_use(outFile):
@@ -454,6 +456,19 @@ def generate_xl(table, year):
             # return True
         # except:
             # return False
+
+def setCellWidth(ws):
+    dims = {}
+    for row in ws.rows:
+        numOfCol = 0
+        for cell in row:
+            numOfCol = 5
+            from openpyxl.cell import MergedCell
+            if cell.value and not isinstance(cell, MergedCell):
+                cell.alignment = Alignment(horizontal='center')
+                dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
+    for col, value in dims.items():
+        ws.column_dimensions[col].width = value + 5
 
 # date format
 def displayTime(time):
