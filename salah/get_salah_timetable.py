@@ -11,7 +11,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
 from moonsighting import get_prayer_table, get_prayer_table_offline
-from r_dates import get_ramadan_dates
+from ramadan_dates import get_ramadan_dates
 from configReader import get_config
 
 import datetime
@@ -97,7 +97,7 @@ class Salah(object):
 
         if self.name == "Isha":
             if (int(hour) == 19 and min <= 50) or int(hour) < 19:
-                    return datetime.time(20, 05, 00)
+                    return datetime.time(20, 5, 00)
             else:
                 if min > 45:
                     new_hour = int(hour) + 1
@@ -477,13 +477,10 @@ def displayTime(time):
 usage = ""
 
 def main():
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--year', dest='year',
-                    default=datetime.datetime.now().year, help='Year of salah timetable')
-    parser.add_argument('--file', dest='filename',
-                    help='XLS file for timetable')
-    parser.add_argument('--usage', dest='usage', type=str, choices=["booking", "web"],
-                    default="web", help='booking or web')
+    parser = argparse.ArgumentParser(description='Generate Salah Time Table for booking and web.')
+    parser.add_argument('--year', dest='year', default=datetime.datetime.now().year, help='Year of salah timetable')
+    parser.add_argument('--file', dest='filename', help='XLS file for timetable')
+    parser.add_argument('--usage', dest='usage', type=str, choices=["booking", "web"], default="web", help='output file type, booking or web')
     args = parser.parse_args()
 
     global usage
