@@ -22,7 +22,7 @@
         Abdul Durrani	a durrani	75	75	75	0	0	0	0	0	0	0	0	0
         Adli Mohamed A Alghanimi	n elbaruni	40	40	40	0	0	0	0	0	0	0	0	0
 
-    C:\GA>school.py NatWest-download-2022-23-School.xlsx school.xlsx 2022
+    C:\GA>python school.py --bank GeneralCC-20240912.xlsx --reference reference_2004.xlsx --year 2023 --outputPath "I:\My Drive\temp"
 
 """
 
@@ -263,8 +263,8 @@ def write_output(donors, reference_data, outPath):
 
         row = row+1
 
-    #print (output)
-#    print("list_of_lists: ", list_of_lists)
+    #   print (output)
+    #   print("list_of_lists: ", list_of_lists)
     print("Saving School Fee summary in output.xlsx")
     outFileName = 'output.xlsx' if outPath is None else outPath + "\\" 'output.xlsx'
     wb.save(outFileName)
@@ -287,8 +287,6 @@ def main():
     year = args.year
     outPath = args.outPath
 
-#    bankStatementXLS, referenceXLS, _start = sys.argv[1:]
-
     start = datetime.date(int(year), 9, 1)#4, 5)
     end = datetime.date(int(year) + 1, 8, 31)#4, 4)
     print(start)
@@ -300,7 +298,7 @@ def main():
     write_output(donors, reference_data, outPath)
     
 
-# C:\GA>school.py NatWest-download-2022-23-School.xlsx school.xlsx 2022
+# C:\GA>python school.py --bank GeneralCC-20240912.xlsx --reference reference_2004.xlsx --year 2023 --outputPath "I:\My Drive\temp"
 if __name__ == '__main__':
     main()
 
