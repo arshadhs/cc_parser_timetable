@@ -11,7 +11,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
 from moonsighting import get_prayer_table, get_prayer_table_offline
-from ramadan_dates import get_ramadan_dates
+from r_dates import get_ramadan_dates
 from configReader import get_config
 
 import datetime
@@ -179,12 +179,25 @@ class Salah(object):
 
         start_time = self.jamat
 
+
+        hour = int(self.jamat.strftime('%H'))
+        min = int(self.jamat.strftime('%M'))
+        
+        if min >= 45:
+            start_time = datetime.time(hour, 45, 00)
+        elif min >= 30 and min < 45:
+            start_time =  datetime.time(hour, 30, 00)
+        elif min >= 15 and min < 30:
+            start_time =  datetime.time(hour, 15, 00)
+        elif min >= 0 and min < 15:
+            start_time =  datetime.time(hour, 00, 00)
+
         if (self.date >= self.ramadan_start and self.date <= self.ramadan_end) and self.name == "Isha":
             booking_duration = 120
         else:
             booking_duration = 30
 
-        end_time = (datetime.datetime.combine(datetime.date(1,1,1), self.jamat) + datetime.timedelta(minutes = booking_duration)).time()
+        end_time = (datetime.datetime.combine(datetime.date(1,1,1), start_time) + datetime.timedelta(minutes = booking_duration)).time()
 
         return start_time, end_time
 
