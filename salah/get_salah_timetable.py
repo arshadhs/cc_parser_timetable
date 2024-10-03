@@ -11,330 +11,51 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
 from moonsighting import get_prayer_table, get_prayer_table_offline
-from r_dates import get_ramadan_dates
+from ramadan_dates import get_ramadan_dates
 from configReader import get_config
+from salah import Salah
+from salahWorkBookGen import SalahWorkBook, FajrSalahWorkBook
 
 import datetime
 import argparse
 import math
 
 COLOUR_BLUE = "add8e6"
-COLOR_P_BLUE = "1e7ba0"
-COLOR_S_BLUE = "0a2842"
+# # COLOR_P_BLUE = "1e7ba0"
+# # COLOR_S_BLUE = "0a2842"
 
 COLOUR_GREY = "dbdbdb"
 COLOR_L_GREY = "6e6e6e" # "ADD8E6"
-COLOR_D_GREY = "474747" #"72bcd4"
-
-class Salah(object):
-    def __init__(self, name, date, start, details, has_jamat=True, fill_color=None, header_color=None):
-        self.name = name
-        self.date = date
-        self.start = start
-        self.details = details
-        self.has_jamat = has_jamat
-        self.fill_color = fill_color
-        self.header_color = header_color
-        self.sunrise = self.details['Sunrise']
-        self.week_day = date.strftime('%a')
-        self.ramadan_start, self.ramadan_end = get_config("config.ini", int(self.date.strftime('%Y')))
-        self.location = str(self.get_location())
-        self.jamat = self.get_jamat_time() # str(self.get_jamat_time())
-        self.booking_start, self.booking_end = self.get_booking_time_slot()
-        self.color_me = fill_color is not None
-        self.is_juma = self.week_day.lower().startswith('fri')
-        if self.is_juma:
-            self.fill_color = PatternFill("solid", fgColor=COLOUR_BLUE)
-            self.color_me = True
-
-
-    # __str__ method to customize how the object is printed
-    def __str__(self):
-        return f"Salah(name={self.name}, date={self.date}, jamat={self.jamat})"
-
-    def ceil_dt(self, dt, delta):
-        # Calculate the number of minutes since midnight
-        minutes = dt.hour * 60 + dt.minute
-        
-        # Always round up to the nearest delta minutes
-        rounded_minutes = math.floor(minutes / delta) * delta
-        
-        # Calculate the new hour and minute
-        new_hour = rounded_minutes / 60
-        new_minute = rounded_minutes % 60
-        
-        # If rounding moves the time into the next day, handle the overflow
-        if new_hour >= 24:
-            dt = dt + timedelta(days=1)
-            new_hour = 0
-        
-        # Return the original date with the rounded up time
-        return dt.replace(hour=int(new_hour), minute=new_minute, second=0, microsecond=0)
-
-    def get_jamat_time(self):
-        hour = int(self.start.strftime('%H'))
-        min = int(self.start.strftime('%M'))
-
-        if self.name == "Dhuhr":
-            if self.week_day == "Fri":
-                self.location == "HUB"
-                if int(hour) == 13 and min > 8:
-                    return datetime.time(13, 15, 00)
-                elif int(hour) == 13:
-                    return datetime.time(13, 10, 00)
-                else:
-                    return datetime.time(13, 5, 00)
-            else:
-                return ""
-
-        # If "Maghrib" is before 6 pm, then no congregation or booking
-        if self.name == "Maghrib":
-
-            if (self.date >= self.ramadan_start and self.date <= self.ramadan_end):
-                return ""
-            if(int(hour) < 18):
-                return ""
-
-        if self.name == "Isha":
-            if (int(hour) == 19 and min <= 50) or int(hour) < 19:
-                    return datetime.time(20, 5, 00)
-            else:
-                if min > 45:
-                    new_hour = int(hour) + 1
-                    if len(str(new_hour)) == 1:
-                        new_hour = '0'+str(new_hour)
-                    return datetime.time(new_hour, 00, 00)
-                elif min > 30 and min <= 45:
-                    return datetime.time(hour, 45, 00)
-                elif min > 15 and min <= 30:
-                    return datetime.time(hour, 30, 00)
-                elif min > 0 and min <= 15:
-                    return datetime.time(hour, 15, 00)
-                else:
-                    return(self.start)
-
-        if self.name == "Fajr":
-            fajr_hour = int(self.sunrise.strftime('%H'))
-            fajr_min = int(self.sunrise.strftime('%M'))
-            
-            #print(f' {self.date.strftime('%m')}')
-            if (self.date >= self.ramadan_start and self.date <= self.ramadan_end and int(self.ramadan_start.strftime('%d')) != int(self.date.strftime('%d'))):
-                tm = (datetime.datetime.combine(datetime.date(1,1,1), self.start) + datetime.timedelta(minutes = 15)).time()
-                return tm
-
-            if int(hour) == 6 and int(min) > 15:
-                return datetime.time(6, 45, 00)
-            elif int(hour) == 6:
-                return datetime.time(6, 30, 00)
-            elif (int(hour) == 5 and (int(min) >= 45)):
-                return datetime.time(6, 30, 00)
-            elif int(hour) == 2:
-                return datetime.time(4, 00, 00)
-            elif fajr_min > 45:
-                return datetime.time(fajr_hour, 00, 00)
-            elif (int(fajr_min) > 30 and fajr_min <= 45):
-                return datetime.time(fajr_hour - 1, 45, 00)
-            elif (int(fajr_min) > 15 and fajr_min <= 30):
-                return datetime.time(fajr_hour - 1, 30, 00)
-            elif (int(fajr_min) >= 00 and fajr_min <= 15):
-                return datetime.time(fajr_hour - 1, 15, 00)
-
-        if min > 55:
-            new_hour = int(hour) + 1
-            if len(str(new_hour)) == 1:
-                new_hour = '0'+str(new_hour)
-            return datetime.time(new_hour, 15, 00)
-        elif min > 50 and min <= 55:
-            return datetime.time(hour, 55, 00)
-        elif min > 45 and min <= 50:
-            return datetime.time(hour, 50, 00)
-        elif min > 40 and min <= 45:
-            return datetime.time(hour, 45, 00)
-        elif min > 35 and min <= 40:
-            return datetime.time(hour, 40, 00)
-        elif min > 30 and min <= 35:
-            return datetime.time(hour, 35, 00)
-        elif min > 25 and min <= 30:
-            return datetime.time(hour, 30, 00)
-        elif min > 20 and min <= 25:
-            return datetime.time(hour, 25, 00)
-        elif min > 15 and min <= 20:
-            return datetime.time(hour, 20, 00)
-        elif min > 10 and min <= 15:
-            return datetime.time(hour, 15, 00)
-        elif min > 5 and min <= 10:
-            return datetime.time(hour, 10, 00)
-        elif min > 0 and min <= 5:
-            return datetime.time(hour, 5, 00)
-        else:
-            return(self.start)
-
-    def get_booking_time_slot(self):
-
-        if self.jamat == "":
-            return None, None
-
-        if self.name == "Dhuhr" and self.week_day == "Fri":
-            return datetime.time(13, 00, 00), datetime.time(14, 00, 00)
-
-        start_time = self.jamat
-
-
-        hour = int(self.jamat.strftime('%H'))
-        min = int(self.jamat.strftime('%M'))
-        
-        if min >= 45:
-            start_time = datetime.time(hour, 45, 00)
-        elif min >= 30 and min < 45:
-            start_time =  datetime.time(hour, 30, 00)
-        elif min >= 15 and min < 30:
-            start_time =  datetime.time(hour, 15, 00)
-        elif min >= 0 and min < 15:
-            start_time =  datetime.time(hour, 00, 00)
-
-        if (self.date >= self.ramadan_start and self.date <= self.ramadan_end) and self.name == "Isha":
-            booking_duration = 120
-        else:
-            booking_duration = 30
-
-        end_time = (datetime.datetime.combine(datetime.date(1,1,1), start_time) + datetime.timedelta(minutes = booking_duration)).time()
-
-        return start_time, end_time
-
-
-    def get_location(self):
-        if self.name == "Fajr":
-            if (int(self.date.strftime('%m')) > 3 and int(self.date.strftime('%m')) < 10) and (int(self.date.strftime('%w')) == 0 or int(self.date.strftime('%w')) == 6):
-                return("BS-H")
-            else:
-                return("NCP")
-        elif self.name == "Dhuhr" and self.week_day == "Fri":
-            return("HUB")
-        elif self.name == "Isha" and (self.date >= self.ramadan_start and self.date <= self.ramadan_end):
-            return("HUB")
-
-        return ""
-
-    def _style_header(self, ws, row, col):
-        if self.header_color:
-            ws.cell(row, col).fill = self.header_color
-        ws.cell(row, col).font = Font(bold=True, color='FFFFFF')
-        ws.cell(row, col).alignment = Alignment(horizontal="center", vertical="center")
-
-    def add_xl_top_header(self, ws, row, col, do_not_merge=False):
-        start_col = col
-        ws.cell(row, col).value = self.name                     # xlsx: Fajr, Dhuhr, Asr, Maghrib, Isha
-        self._style_header(ws, row, col)
-        col += 1
-        if self.has_jamat:
-            col += 3 # jamat, booking and location columns
-        if not do_not_merge:
-            ws.merge_cells(start_row=row, start_column=start_col, end_row=row, end_column=col - 1)
-        return col
-
-    def add_xl_header(self, ws, row, col):
-        ws.cell(row, col).value = 'Start'
-        self._style_header(ws, row, col)
-        col += 1
-        if self.has_jamat:
-            ws.cell(row, col).value = 'Booking'
-            self._style_header(ws, row, col)
-            col += 1
-            ws.cell(row, col).value = 'Jamat'
-            self._style_header(ws, row, col)
-            col += 1
-            ws.cell(row, col).value = 'Location'
-            self._style_header(ws, row, col)
-            col += 1
-        return col
-
-    # Fill the we.cell(row,col). value
-    def add_xl_columns(self, ws, row, col):
-        ws.cell(row, col).value = displayTime(self.start)  # Start Time
-        if self.color_me:
-            ws.cell(row, col).fill = self.fill_color
-        if self.is_juma:
-            ws.cell(row, col).font = Font(bold=True)
-        col += 1
-        if self.has_jamat:
-            ws.cell(row, col).value = displayTime(self.booking_start) + "-" + displayTime(self.booking_end) if self.booking_start else ""
-            if self.color_me:
-                ws.cell(row, col).fill = self.fill_color
-            if self.is_juma:
-                ws.cell(row, col).font = Font(bold=True)
-            col += 1
-            ws.cell(row, col).value = displayTime(self.jamat) if self.jamat else "" # Jamat
-            if self.color_me:
-                ws.cell(row, col).fill = self.fill_color
-            if self.is_juma:
-                ws.cell(row, col).font = Font(bold=True)
-            col += 1
-            ws.cell(row, col).value = self.location
-            if self.color_me:
-                ws.cell(row, col).fill = self.fill_color
-            if self.is_juma:
-                ws.cell(row, col).font = Font(bold=True)
-            col += 1
-        return col
-
-
-# To add Sunrise column
-class FajrSalah(Salah):
-    def __init__(self, date, start, details, has_jamat=True, fill_color=None, header_color=None):
-        super().__init__('Fajr', date, start, details, has_jamat=has_jamat, fill_color=fill_color, header_color=header_color)
-        self.sunrise = details['Sunrise']
-
-    def add_xl_top_header(self, ws, row, col):
-        start_col = col
-        col = super().add_xl_top_header(ws, row, col, do_not_merge=True)
-        ws.merge_cells(start_row=row, start_column=start_col, end_row=row, end_column=col)
-        col += 1
-        return col
-
-    def add_xl_header(self, ws, row, col):
-        col = super().add_xl_header(ws, row, col)
-        ws.cell(row, col).value = 'Sunrise'
-        self._style_header(ws, row, col)
-        col += 1
-        return col
-
-    # Fill the we.cell(row,col). value with sunrise time
-    def add_xl_columns(self, ws, row, col):
-        col = super().add_xl_columns(ws, row, col)
-        ws.cell(row, col).value = displayTime(self.sunrise)
-        if self.color_me:
-            ws.cell(row, col).fill = self.fill_color
-        if self.is_juma:
-            ws.cell(row, col).font = Font(bold=True)
-        col += 1
-        return col
+# # COLOR_D_GREY = "474747" #"72bcd4"
 
 
 def salah_org(table):
-    fill_grn = PatternFill("solid", fgColor=COLOUR_GREY)
-    header_color = PatternFill("solid", fgColor=COLOR_L_GREY)
-
     for row, (date, time) in enumerate(table['schedule'].items(), start=1):
-        fill_color = fill_grn if row % 2 != 0 else None
-
         # print("time.values(): ", time.keys(), " : ", time.values())
         # odict_keys(['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'])
         # odict_values(['06:28', '08:09', '12:08', '14:10', '16:00', '17:34'])
 
         Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = time.values()
 
-        # print ("date: ", date)    # date:  Dec 30 Tue
-        # print ("time: ", time)    # time:  OrderedDict({'Fajr': '06:28', 'Sunrise': '08:09', 'Dhuhr': '12:07', 'Asr': '14:09', 'Maghrib': '15:59', 'Isha': '17:33'})
+        #print ("date: ", date)    # date:  dec 30 tue
+        #print ("time: ", time)    # time:  ordereddict({'fajr': '06:28', 'sunrise': '08:09', 'dhuhr': '12:07', 'asr': '14:09', 'maghrib': '15:59', 'isha': '17:33'})
 
         # Build a Salah Object for time['x']
         # it swaps out time['x'] from 'time' to 'Salah' object
-        time['Fajr'] = FajrSalah(date, Fajr, time, fill_color=fill_color, header_color=header_color)
-        time['Dhuhr'] = Salah('Dhuhr', date, Dhuhr, time, has_jamat=True, fill_color=fill_color, header_color=header_color)
-        time['Asr'] = Salah('Asr', date, Asr, time, has_jamat=False, fill_color=fill_color, header_color=header_color)
-        time['Maghrib'] = Salah('Maghrib', date, Maghrib, time, has_jamat=True, fill_color=fill_color, header_color=header_color)
-        time['Isha'] = Salah('Isha', date, Isha, time, has_jamat=True, fill_color=fill_color, header_color=header_color)
+        time['Fajr'] = Salah('Fajr', date, Fajr, time, has_jamat=True)
+        time['Dhuhr'] = Salah('Dhuhr', date, Dhuhr, time, has_jamat=True)
+        time['Asr'] = Salah('Asr', date, Asr, time, has_jamat=False)
+        time['Maghrib'] = Salah('Maghrib', date, Maghrib, time, has_jamat=True)
+        time['Isha'] = Salah('Isha', date, Isha, time, has_jamat=True)
 
-    #print (table)
+        # Build WorkBook Cells for each prayer time
+        time['Fajr'] = FajrSalahWorkBook(time['Fajr'], usage)
+        time['Dhuhr'] = SalahWorkBook(time['Dhuhr'], usage)
+        time['Asr'] = SalahWorkBook(time['Asr'], usage)
+        time['Maghrib'] = SalahWorkBook(time['Maghrib'], usage)
+        time['Isha'] = SalahWorkBook(time['Isha'], usage)
+
+#    print (table)
     return table
 
 
@@ -343,7 +64,7 @@ def generate_xl(table, year):
     wb = Workbook()
     wb['Sheet'].title = 'CC booking'
     ws = wb['CC booking']
-    fill_color = PatternFill("solid", fgColor=COLOUR_GREY)
+
     header_color = PatternFill("solid", fgColor=COLOR_L_GREY)
     row = 1
 
@@ -352,15 +73,10 @@ def generate_xl(table, year):
 
         week_day = date.strftime('%a')
         is_juma = week_day == 'Fri'
-        if is_juma:
-            fill_color = PatternFill("solid", fgColor=COLOUR_BLUE)
-        else:
-            fill_color = PatternFill("solid", fgColor=COLOUR_GREY)
-        color_me = fill_color if is_juma or serial_no % 2 != 0 else None
-        
+
         # Add Salah header
 
-        # First day of the year and web
+        # Header - web (2 rows every month)
         if (date.day == 1) and (date.month == 1) and usage == "web":
             # id, date, day
             col = 1
@@ -375,10 +91,11 @@ def generate_xl(table, year):
 
             # Start, Booking, Jamat, Location (Sunrise)
             for salah in next(iter(table['schedule'].values())).values():
-                if isinstance(salah, Salah):
+                if isinstance(salah, SalahWorkBook):
                     col = salah.add_xl_header(ws, row, col)
             row += 1
 
+        # Header - booking (1 row on top of the sheet)
         elif int(date.strftime('%d') == "01") and usage == "booking":
             # First day of the month
 
@@ -394,7 +111,7 @@ def generate_xl(table, year):
 
             # Fajr, Dhuhr, Asr, Maghrib, Isha
             for salah in next(iter(table['schedule'].values())).values():
-                if isinstance(salah, Salah):
+                if isinstance(salah, SalahWorkBook):
                     col = salah.add_xl_top_header(ws, row, col)
 
             # Add Salah header
@@ -418,36 +135,32 @@ def generate_xl(table, year):
 
             # Start, Booking, Jamat, Location (Sunrise)
             for salah in next(iter(table['schedule'].values())).values():
-                if isinstance(salah, Salah):
+                if isinstance(salah, SalahWorkBook):
                     col = salah.add_xl_header(ws, row, col)
             row += 1
 
-        # Fill up the actual data
+        # Data - fill up the actual data
+        fill_color = PatternFill("solid", fgColor=COLOUR_BLUE) if is_juma else PatternFill("solid", fgColor=COLOUR_GREY) if row % 2 != 0 else PatternFill(fgColor="ffffff")
         col = 1
-        ws.cell(row, col).value = serial_no                     # Serial Number
+        ws.cell(row, col).value = serial_no                     # id (Serial Number)
         serial_no += 1
-        if color_me:
-            ws.cell(row, col).fill = fill_color
-        if is_juma:
-            ws.cell(row, col).font = Font(bold=True)
-        col += 1
-        ws.cell(row, col).value = date.strftime('%b-%d') if usage == "booking" else date.strftime('%d/%m/%Y')       # Date
-        if color_me:
-            ws.cell(row, col).fill = fill_color
-        if is_juma:
-            ws.cell(row, col).font = Font(bold=True)
+        ws.cell(row, col).fill = fill_color
+        ws.cell(row, col).font = Font(bold=True) if is_juma else Font(bold=False)
 
-        if usage == "booking":
+        col += 1                                                # Date
+        ws.cell(row, col).value = date.strftime('%b-%d') if usage == "booking" else date.strftime('%d/%m/%Y')
+        ws.cell(row, col).fill = fill_color
+        ws.cell(row, col).font = Font(bold=True) if is_juma else Font(bold=False)
+
+        if usage == "booking":                                  # Day
             col += 1
-            ws.cell(row, col).value = date.strftime('%a')           # Day
-
-        if color_me:
+            ws.cell(row, col).value = date.strftime('%a')
             ws.cell(row, col).fill = fill_color
-        if is_juma:
-            ws.cell(row, col).font = Font(bold=True)
-        col += 1
+            ws.cell(row, col).font = Font(bold=True) if is_juma else Font(bold=False)
+
+        col += 1                                                # Values - Start, Booking, Jamat, Location (Fill the value and style / colour etc.)
         for salah in day.values():
-            if isinstance(salah, Salah):
+            if isinstance(salah, SalahWorkBook):
                 col = salah.add_xl_columns(ws, row, col)
         row += 1
 
@@ -462,13 +175,12 @@ def generate_xl(table, year):
     # else:
         # print("\nError[13]: Permission denied", outFile)
 
-
-# def not_in_use(filename):
-        # try:
-            # os.rename(filename,filename)
-            # return True
-        # except:
-            # return False
+def not_in_use(filename):
+        try:
+            os.rename(filename,filename)
+            return True
+        except:
+            return False
 
 def setCellWidth(ws):
     dims = {}
@@ -483,9 +195,7 @@ def setCellWidth(ws):
     for col, value in dims.items():
         ws.column_dimensions[col].width = value + 5
 
-# date format
-def displayTime(time):
-    return time.strftime("%H:%M") if usage == "booking" else time.strftime("%H:%M:%S")
+
 
 usage = ""
 
