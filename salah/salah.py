@@ -15,7 +15,7 @@ from dateutil import relativedelta
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
-from r_dates import get_ramadan_dates
+from ramadan_dates import get_ramadan_dates
 from configReader import get_config
 
 
