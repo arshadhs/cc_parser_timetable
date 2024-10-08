@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+
+"""
+    Workbook reading / writing
+"""
+
+__author__      = "Mohammad Azim Khan, Arshad H. Siddiqui"
+__copyright__   = "Free to all"
+
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from salah import Salah
@@ -7,8 +16,8 @@ COLOR_P_BLUE = "1e7ba0"
 COLOR_S_BLUE = "0a2842"
 
 COLOUR_GREY = "dbdbdb"
-COLOR_L_GREY = "6e6e6e" # "ADD8E6"
-COLOR_D_GREY = "474747" #"72bcd4"
+COLOR_L_GREY = "6e6e6e"
+COLOR_D_GREY = "474747"
 
 class SalahWorkBook(object):
     def __init__(self, salah, usage): # name, date, start, details, has_jamat=True, fill_color=None, header_color=None):
@@ -66,7 +75,7 @@ class SalahWorkBook(object):
         fill_color = PatternFill("solid", fgColor=COLOUR_BLUE) if self.salah.is_juma else PatternFill("solid", fgColor=COLOUR_GREY) if row % 2 != 0 else PatternFill(fgColor="ffffff")
 
         # Start
-        ws.cell(row, col).value = self.salah.displayTime(self.salah.start)  # Start Time
+        ws.cell(row, col).value = self.displayTime(self.salah.start)  # Start Time
         ws.cell(row, col).fill = fill_color
         ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
         col += 1
@@ -74,13 +83,13 @@ class SalahWorkBook(object):
         # If there's congregation - Booking, Jamat, Location
         if self.salah.has_jamat:
             # Booking
-            ws.cell(row, col).value = self.salah.displayTime(self.salah.booking_start) + "-" + self.salah.displayTime(self.salah.booking_end) if self.salah.booking_start else ""
+            ws.cell(row, col).value = self.displayTime(self.salah.booking_start) + "-" + self.displayTime(self.salah.booking_end) if self.salah.booking_start else ""
             ws.cell(row, col).fill = fill_color
             ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
             col += 1
 
             # Jamat
-            ws.cell(row, col).value = self.salah.displayTime(self.salah.jamat) if self.salah.jamat else "" # Jamat
+            ws.cell(row, col).value = self.displayTime(self.salah.jamat) if self.salah.jamat else "" # Jamat
             ws.cell(row, col).fill = fill_color
             ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)   
             col += 1
@@ -92,6 +101,7 @@ class SalahWorkBook(object):
             col += 1
 
         return col
+
 
 # To add Sunrise column
 class FajrSalahWorkBook(SalahWorkBook):
