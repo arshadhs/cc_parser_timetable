@@ -7,60 +7,74 @@
 __author__      = "Mohammad Azim Khan, Arshad H. Siddiqui"
 __copyright__   = "Free to all"
 
-from openpyxl import Workbook
-from openpyxl.styles import PatternFill, Font, Alignment
-
-from moonsighting import get_prayer_table, get_prayer_table_offline
-from ramadan_dates import get_ramadan_dates
-from configReader import get_config
-from salah import Salah
-from salahWorkBookGen import SalahWorkBook, FajrSalahWorkBook
-
 import datetime
 import argparse
 import math
 
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Font, Alignment
+
+import salahUtils
+
+from moonsighting import get_prayer_table, get_prayer_table_offline
+from salah import Salah, recalculate_jamat_time
+from salahWorkBookGen import SalahWorkBook, FajrSalahWorkBook
+from validator import validateJamatTime
+
 COLOUR_BLUE = "add8e6"
-# # COLOR_P_BLUE = "1e7ba0"
-# # COLOR_S_BLUE = "0a2842"
+# COLOR_P_BLUE = "1e7ba0"
+# COLOR_S_BLUE = "0a2842"
 
 COLOUR_GREY = "dbdbdb"
-COLOR_L_GREY = "6e6e6e" # "ADD8E6"
-# # COLOR_D_GREY = "474747" #"72bcd4"
+COLOR_L_GREY = "6e6e6e"
+# COLOR_D_GREY = "474747"
 
-
-def salah_org(table):
-    for row, (date, time) in enumerate(table['schedule'].items(), start=1):
+# Build a Salah Object for time['x']
+# it swaps out time['x'] from 'time' to 'Salah' object
+def salah_gen(table):
+    for row, (date, time) in enumerate(table['schedule'].items(), start=1): # For each day in the year
         # print("time.values(): ", time.keys(), " : ", time.values())
-        # odict_keys(['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'])
-        # odict_values(['06:28', '08:09', '12:08', '14:10', '16:00', '17:34'])
+                                    # odict_keys(['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'])
+                                    # odict_values(['06:28', '08:09', '12:08', '14:10', '16:00', '17:34'])
+        #print ("date: ", date)     # date:  dec 30 tue
+        #print ("time: ", time)     # time:  ordereddict({'fajr': '06:28', 'sunrise': '08:09', 'dhuhr': '12:07', 'asr': '14:09', 'maghrib': '15:59', 'isha': '17:33'})
+
 
         Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = time.values()
 
-        #print ("date: ", date)    # date:  dec 30 tue
-        #print ("time: ", time)    # time:  ordereddict({'fajr': '06:28', 'sunrise': '08:09', 'dhuhr': '12:07', 'asr': '14:09', 'maghrib': '15:59', 'isha': '17:33'})
-
-        # Build a Salah Object for time['x']
-        # it swaps out time['x'] from 'time' to 'Salah' object
         time['Fajr'] = Salah('Fajr', date, Fajr, time, has_jamat=True)
         time['Dhuhr'] = Salah('Dhuhr', date, Dhuhr, time, has_jamat=True)
         time['Asr'] = Salah('Asr', date, Asr, time, has_jamat=False)
         time['Maghrib'] = Salah('Maghrib', date, Maghrib, time, has_jamat=True)
         time['Isha'] = Salah('Isha', date, Isha, time, has_jamat=True)
+#    print (table)
+    return table
 
-        # Build WorkBook Cells for each prayer time
+
+def salah_calculator(salahTable, dstDates):
+    salahReCalcTable = recalculate_jamat_time(salahTable, dstDates)
+    return salahTable # salahReCalcTable
+
+
+# Build WorkBook Cells for each prayer time
+def workbook_gen(table):
+    for row, (date, time) in enumerate(table['schedule'].items(), start=1): # For each day in the year
+#        print ("date: ", date)      # date:  2025-12-29
+#        print ("time: ", time)      # time:  OrderedDict({
+                                    # 'Fajr': <salah.Salah object at 0x04639DB0>, 'Sunrise': datetime.time(8, 9), 
+                                    # 'Dhuhr': <salah.Salah object at 0x0463C198>, 'Asr': <salah.Salah object at 0x0463C2A0>,
+                                    # 'Maghrib': <salah.Salah object at 0x0463C3C0>, 'Isha': <salah.Salah object at 0x0463C4C8>})
+        Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = time.values()
         time['Fajr'] = FajrSalahWorkBook(time['Fajr'], usage)
         time['Dhuhr'] = SalahWorkBook(time['Dhuhr'], usage)
         time['Asr'] = SalahWorkBook(time['Asr'], usage)
         time['Maghrib'] = SalahWorkBook(time['Maghrib'], usage)
         time['Isha'] = SalahWorkBook(time['Isha'], usage)
-
 #    print (table)
     return table
 
 
-def generate_xl(table, year):
-    table = salah_org(table)
+def generate_xl(wbTable, year):#inputTable, year):
     wb = Workbook()
     wb['Sheet'].title = 'CC booking'
     ws = wb['CC booking']
@@ -69,7 +83,7 @@ def generate_xl(table, year):
     row = 1
 
     # Add each day as rows
-    for serial_no, (date, day) in enumerate(table['schedule'].items(), start=1):
+    for serial_no, (date, day) in enumerate(wbTable['schedule'].items(), start=1):
 
         week_day = date.strftime('%a')
         is_juma = week_day == 'Fri'
@@ -90,7 +104,7 @@ def generate_xl(table, year):
             col += 1
 
             # Start, Booking, Jamat, Location (Sunrise)
-            for salah in next(iter(table['schedule'].values())).values():
+            for salah in next(iter(wbTable['schedule'].values())).values():
                 if isinstance(salah, SalahWorkBook):
                     col = salah.add_xl_header(ws, row, col)
             row += 1
@@ -110,7 +124,7 @@ def generate_xl(table, year):
             ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=col - 1)
 
             # Fajr, Dhuhr, Asr, Maghrib, Isha
-            for salah in next(iter(table['schedule'].values())).values():
+            for salah in next(iter(wbTable['schedule'].values())).values():
                 if isinstance(salah, SalahWorkBook):
                     col = salah.add_xl_top_header(ws, row, col)
 
@@ -134,7 +148,7 @@ def generate_xl(table, year):
             col += 1
 
             # Start, Booking, Jamat, Location (Sunrise)
-            for salah in next(iter(table['schedule'].values())).values():
+            for salah in next(iter(wbTable['schedule'].values())).values():
                 if isinstance(salah, SalahWorkBook):
                     col = salah.add_xl_header(ws, row, col)
             row += 1
@@ -175,12 +189,14 @@ def generate_xl(table, year):
     # else:
         # print("\nError[13]: Permission denied", outFile)
 
+
 def not_in_use(filename):
         try:
             os.rename(filename,filename)
             return True
         except:
             return False
+
 
 def setCellWidth(ws):
     dims = {}
@@ -194,7 +210,6 @@ def setCellWidth(ws):
                 dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
     for col, value in dims.items():
         ws.column_dimensions[col].width = value + 5
-
 
 
 usage = ""
@@ -214,22 +229,33 @@ def main():
     # print(f"Ramadan in {args.year} starts on {ramadan_start} and ends on {ramadan_end}")
 
     # using config file
-    ramadan_start, ramadan_end = get_config("config.ini", args.year)
+    ramadan_start, ramadan_end = salahUtils.get_config("config.ini", args.year)
     print(f"Ramadan in {args.year} starts on {ramadan_start} and ends on {ramadan_end}")
 
     # If the filename is supplied fetch the data from file, else from URL
     if args.filename is not None:
-        table = get_prayer_table_offline(args.year, args.filename)
+        moonSightTable = get_prayer_table_offline(args.year, args.filename)
     else:
         table = get_prayer_table(args.year)
 
     # If the filename is supplied fetch the data from file, else from URL
     if args.year is not None:
-        table = get_prayer_table_offline(args.year, args.filename)
+        moonSightTable = get_prayer_table_offline(args.year, args.filename)
     else:
-        table = get_prayer_table(args.year)
+        moonSightTable = get_prayer_table(args.year)
 
-    generate_xl(table, args.year)
+    # Add booking data to moon sighting data
+    salahBookingTable = salah_gen(moonSightTable)
+    dstDates = salahUtils.getDSTtransitionDates(int(args.year))
+    salahCalculatedTable = salah_calculator(salahBookingTable, dstDates)
+
+    # Validate the calculated booking data
+    validateJamatTime(salahCalculatedTable)
+
+    # Generate the xlsx
+    wbTable = workbook_gen(salahCalculatedTable)
+    generate_xl(wbTable, args.year)
+
 
 if __name__ == '__main__':
     main()
