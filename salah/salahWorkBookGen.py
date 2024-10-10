@@ -42,9 +42,24 @@ class SalahWorkBook(object):
         ws.cell(row, col).alignment = Alignment(horizontal="center", vertical="center")
 
     # Month - Header - Month, Year, Fajr, Dhuhr, Asr, Maghrib, Isha
-    def add_xl_top_header(self, ws, row, col, do_not_merge=False):
+    def add_xl_top_header(self, ws, row, col, hide, do_not_merge=False):
         start_col = col
         ws.cell(row, col).value = self.salah.name       # xlsx: Fajr, Dhuhr, Asr, Maghrib, Isha
+
+        if (not hide):
+            ws.cell(row, col).value = self.salah.name       # xlsx: Fajr, Dhuhr, Asr, Maghrib, Isha
+        else:
+            if (self.salah.name == "Fajr"):
+                ws.cell(row, col).value = "Morning"
+            if (self.salah.name == "Dhuhr"):
+                ws.cell(row, col).value = "Noon"
+            if (self.salah.name == "Asr"):
+                ws.cell(row, col).value = "After Noon"
+            if (self.salah.name == "Maghrib"):
+                ws.cell(row, col).value = "Evening"
+            if (self.salah.name == "Isha"):
+                ws.cell(row, col).value = "Night"
+
         self._style_header(ws, row, col)
         col += 1
         if self.salah.has_jamat:
@@ -83,7 +98,7 @@ class SalahWorkBook(object):
         # If there's congregation - Booking, Jamat, Location
         if self.salah.has_jamat:
             # Booking
-            ws.cell(row, col).value = self.displayTime(self.salah.booking_start) + "-" + self.displayTime(self.salah.booking_end) if self.salah.booking_start else ""
+            ws.cell(row, col).value = self.displayTime(self.salah.booking_start) + " - " + self.displayTime(self.salah.booking_end) if self.salah.booking_start else ""
             ws.cell(row, col).fill = fill_color
             ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
             col += 1
@@ -91,13 +106,13 @@ class SalahWorkBook(object):
             # Jamat
             ws.cell(row, col).value = self.displayTime(self.salah.jamat) if self.salah.jamat else "" # Jamat
             ws.cell(row, col).fill = fill_color
-            ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)   
+            ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
             col += 1
 
             # Location
             ws.cell(row, col).value = self.salah.location
             ws.cell(row, col).fill = fill_color
-            ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)   
+            ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
             col += 1
 
         return col
@@ -110,10 +125,10 @@ class FajrSalahWorkBook(SalahWorkBook):
         self.sunrise = self.salah.details['Sunrise'] #details['Sunrise']
         self.usage = usage
 
-    def add_xl_top_header(self, ws, row, col):
+    def add_xl_top_header(self, ws, row, col, hide):
         start_col = col
 
-        col = super().add_xl_top_header(ws, row, col, do_not_merge=True)
+        col = super().add_xl_top_header(ws, row, col, hide, do_not_merge=True)
         ws.merge_cells(start_row=row, start_column=start_col, end_row=row, end_column=col)
         col += 1
         return col
