@@ -13,6 +13,7 @@ import math
 
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
+from openpyxl.styles.borders import Border, Side
 
 import salahUtils
 
@@ -74,7 +75,7 @@ def workbook_gen(table):
     return table
 
 
-def generate_xl(wbTable, year):#inputTable, year):
+def generate_xl(wbTable, year):
     wb = Workbook()
     wb['Sheet'].title = 'CC booking'
     ws = wb['CC booking']
@@ -126,7 +127,7 @@ def generate_xl(wbTable, year):#inputTable, year):
             # Fajr, Dhuhr, Asr, Maghrib, Isha
             for salah in next(iter(wbTable['schedule'].values())).values():
                 if isinstance(salah, SalahWorkBook):
-                    col = salah.add_xl_top_header(ws, row, col)
+                    col = salah.add_xl_top_header(ws, row, col, hideColumns)
 
             # Add Salah header
 
@@ -180,6 +181,21 @@ def generate_xl(wbTable, year):#inputTable, year):
 
     setCellWidth(ws)
 
+    # Hide columns not relevant for booking
+    if (hideColumns):
+        for col in ['D', 'F', 'H', 'I', 'K', 'I', 'M', 'N', 'P', 'R', 'T']:
+            ws.column_dimensions[col].hidden= True
+
+        thin_border = Border(left=Side(style='none'), 
+                     right=Side(style='thick'), 
+                     top=Side(style='none'), 
+                     bottom=Side(style='none'))
+
+        for col in ['C', 'G', 'L', 'Q', 'U']:
+            for cell in ws[col]:
+                cell.border = thin_border
+            #ws.cell(column=2).border = thin_border
+
     outFile = 'Cambourne_salah_timetable_'+year+'.xlsx'
     wb.save(outFile)
     print("\nWritten to", outFile)
@@ -213,16 +229,23 @@ def setCellWidth(ws):
 
 
 usage = ""
+hideColumns = False
 
 def main():
     parser = argparse.ArgumentParser(description='Generate Salah Time Table for booking and web.')
     parser.add_argument('--year', dest='year', default=datetime.datetime.now().year, help='Year of salah timetable')
-    parser.add_argument('--file', dest='filename', help='XLS file for timetable')
-    parser.add_argument('--usage', dest='usage', type=str, choices=["booking", "web"], default="web", help='output file type, booking or web')
+    parser.add_argument('--file', dest='filename', help='Input XLS file for timetable')
+    parser.add_argument('--usage', dest='usage', type=str, choices=["booking", "web"], default="web", help='Output file type, booking or web')
+    parser.add_argument('hide', default=argparse.SUPPRESS, nargs='?', help='Hide certain columns (if generating booking sheet)')
     args = parser.parse_args()
 
     global usage
     usage = args.usage
+
+    global hideColumns
+
+    if hasattr(args, 'hide') and usage == "booking":
+        hideColumns = True
 
     # ToDo: module not returning expected results
     # ramadan_start, ramadan_end = get_ramadan_dates(int(args.year))
