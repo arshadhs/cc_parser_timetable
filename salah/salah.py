@@ -58,6 +58,10 @@ class Salah(object):
             else:
                 return ""
 
+        # Asr
+        if self.name == "Asr":
+            return ""
+
         # "Maghrib" - jamat_time
         # Before 6 pm, then no congregation or booking
         # Ramadan, then no congregation or booking
@@ -82,7 +86,8 @@ class Salah(object):
         if self.name == "Fajr":
             return self.get_fajr_jamat_time(hour, min)
 
-        # print("Fallback, why am I here? : Booking time: ", self.date, self.name)
+        # Maghrib - jamat_time
+        #print("Fallback, why am I here? : Booking time: ", self.date, self.name)
         return (salahUtils.add_and_ceil_dt(self.start, 0, 15))
 
     def get_fajr_jamat_time(self, hour, min):
