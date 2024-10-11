@@ -17,7 +17,7 @@ from openpyxl.styles import PatternFill, Font, Alignment
 
 import salahUtils
 
-from r_dates import get_ramadan_dates
+from ramadan_dates import get_ramadan_dates
 
 class Salah(object):
     def __init__(self, name, date, start, details, has_jamat=True):

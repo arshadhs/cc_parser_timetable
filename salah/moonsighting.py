@@ -29,21 +29,25 @@ def get_prayer_table(year):
 def _get_sheet_from_hdr(wb, headers):
     for sheet_name in wb.sheetnames:
         sheet = wb[sheet_name]
+
         for row in sheet.iter_rows(min_row=1, max_col=7, max_row=1):
             header = []
 
             for cell in row:
-                # print (cell.value)
-                # print (type(cell.value))
+                print (cell.value)
+                print (type(cell.value))
+                #val = cell.value if not isinstance (cell.value, float) else int(cell.value) 
                 header.append(str(cell.value))
             break               
 
-        if set(header).issuperset(headers):
+        print (headers)
+        print(header)
+        #if set(header).issuperset(headers):
 #            print(f"Found xls '{sheet_name}'")
-            return sheet
-        else:
-            print (set(header).difference(headers))
-            print (set(headers).difference(header))
+        return sheet
+        # else:
+            # print (set(header).difference(headers))
+            # print (set(headers).difference(header))
 
     print('Failed to find the xls with timing information')
     return None
@@ -67,13 +71,13 @@ def get_prayer_table_offline(year, filename):
         for row in sheet.iter_rows(min_row=2, max_col=7, values_only=True):
 
             date_string, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = row[:7]
-#            print (row)
-
+            #print (row)
             # Combine the year with the date string
             full_date_string = f"{year} {date_string}"
 
             # Convert the string to a datetime object using strptime
-            date_obj = datetime.strptime(full_date_string, '%Y %b %d %a').date()
+            #print(full_date_string)
+            date_obj = date_string.date() #datetime.strptime(full_date_string, '%Y %b %d %a').date()
 
             schedule[date_obj] = OrderedDict(
                                     Fajr=datetime.strptime(str(Fajr), '%H:%M:%S').time(),

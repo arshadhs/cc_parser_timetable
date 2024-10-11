@@ -9,6 +9,8 @@
     xmltodict==0.13.0
     python-certifi-win32
     hijridate
+	python-dateutil
+	tzdata
 
 # Generate Salah timetable
 python3.exe get_salah_timetable.py --year $year

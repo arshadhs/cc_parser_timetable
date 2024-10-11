@@ -2,6 +2,9 @@
 
 """
     Implements Logic to build up a Salah Planner using data from moonsighting (url or xlsx)
+    
+    e.g.
+    python get_salah_timetable.py --year 2025 --file docs\salah2025.xlsx --usage web hide
 """
 
 __author__      = "Mohammad Azim Khan, Arshad H. Siddiqui"
