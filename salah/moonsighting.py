@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 import xmltodict
 from openpyxl import load_workbook, Workbook
+from dateutil import parser
 
 def get_prayer_table(year):
     url = 'https://www.moonsighting.com/praytable.php'
@@ -73,19 +74,20 @@ def get_prayer_table_offline(year, filename):
             date_string, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = row[:7]
             #print (row)
             # Combine the year with the date string
-            full_date_string = f"{year} {date_string}"
+            full_date_string = f"{date_string}"
 
             # Convert the string to a datetime object using strptime
-            #print(full_date_string)
-            date_obj = datetime.strptime(full_date_string, '%Y %b %d %a').date()
-
-            schedule[date_obj] = OrderedDict(
-                                    Fajr=datetime.strptime(str(Fajr), '%H:%M:%S').time(),
-                                    Sunrise=datetime.strptime(str(Sunrise), '%H:%M:%S').time(),
-                                    Dhuhr=datetime.strptime(str(Dhuhr), '%H:%M:%S').time(),
-                                    Asr=datetime.strptime(str(Asr), '%H:%M:%S').time(),
-                                    Maghrib=datetime.strptime(str(Maghrib), '%H:%M:%S').time(),
-                                    Isha=datetime.strptime(str(Isha), '%H:%M:%S').time())
+            print(full_date_string)
+            date_obj = (parser.parse(full_date_string)).date() #datetime.strptime(full_date_string, '%Y-%b-%d %H:%M:%S').date()
+            #date_obj = datetime.strptime(date_string, '%Y %b %d %a').date()
+            if date_obj is not None:
+                schedule[date_obj] = OrderedDict(
+                                        Fajr=datetime.strptime(str(Fajr), '%H:%M:%S').time(),
+                                        Sunrise=datetime.strptime(str(Sunrise), '%H:%M:%S').time(),
+                                        Dhuhr=datetime.strptime(str(Dhuhr), '%H:%M:%S').time(),
+                                        Asr=datetime.strptime(str(Asr), '%H:%M:%S').time(),
+                                        Maghrib=datetime.strptime(str(Maghrib), '%H:%M:%S').time(),
+                                        Isha=datetime.strptime(str(Isha), '%H:%M:%S').time())
 
     # for key, value in (schedule).items():
         # print ("key: ", key)
