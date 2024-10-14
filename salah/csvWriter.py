@@ -22,7 +22,7 @@ def csvWriter(wbTable, year):
 
     #print(wbTable)
 
-    outFile = 'Cambourne_web_'+year+'.csv'
+    outFile = 'docs\CC_web_'+year+'.csv'
 
     header = ['id', 'date', 'fajr', 'sunrise', 'fajr_con', 'fajr_loc', 'dhuhr', 'dhuhr_con', 'dhuhr_loc', 'asr', 'asr_con', 'asr_loc', 'maghrib', 'maghrib_con', 'maghrib_loc', 'isha', 'isha_con', 'isha_loc', 'arabic_date_text']
     # Write dictionary to CSV file

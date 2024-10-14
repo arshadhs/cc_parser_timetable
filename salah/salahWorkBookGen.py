@@ -73,18 +73,17 @@ class SalahWorkBook(object):
         ws.cell(row, col).value = 'Start' if self.usage == "booking" else self.salah.name.lower()                 # Start - Header
         self._style_header(ws, row, col)
         col += 1
-#        if self.salah.has_jamat:
-        if self.usage == "booking":
+        if self.salah.has_jamat and self.usage == "booking":
             ws.cell(row, col).value = 'Booking'# Booking - Header
             self._style_header(ws, row, col)
             col += 1
 
-        ws.cell(row, col).value = 'Jamat' if self.usage == "booking" else self.salah.name.lower() + "_con"    # Jamat - Header
-        self._style_header(ws, row, col)
-        col += 1
-        ws.cell(row, col).value = 'Location' if self.usage == "booking" else self.salah.name.lower() + "_loc"  # Location - Header
-        self._style_header(ws, row, col)
-        col += 1
+            ws.cell(row, col).value = 'Jamat' if self.usage == "booking" else self.salah.name.lower() + "_con"    # Jamat - Header
+            self._style_header(ws, row, col)
+            col += 1
+            ws.cell(row, col).value = 'Location' if self.usage == "booking" else self.salah.name.lower() + "_loc"  # Location - Header
+            self._style_header(ws, row, col)
+            col += 1
         return col
 
     # Values (we.cell(row,col)) - Start, Booking, Jamat, Location (Fill the value and style / colour etc.)
@@ -98,25 +97,25 @@ class SalahWorkBook(object):
         col += 1
 
         # If there's congregation - Booking, Jamat, Location
-#        if self.salah.has_jamat:
+        if self.salah.has_jamat and self.usage == "booking":
         # Booking
-        if self.usage == "booking":
+#        if self.usage == "booking":
             ws.cell(row, col).value = self.displayTime(self.salah.booking_start) + " - " + self.displayTime(self.salah.booking_end) if self.salah.booking_start else ""
             ws.cell(row, col).fill = fill_color
             ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
             col += 1
 
-        # Jamat
-        ws.cell(row, col).value = self.displayTime(self.salah.jamat) if self.salah.jamat else "" # Jamat
-        ws.cell(row, col).fill = fill_color
-        ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
-        col += 1
+            # Jamat
+            ws.cell(row, col).value = self.displayTime(self.salah.jamat) if self.salah.jamat else "" # Jamat
+            ws.cell(row, col).fill = fill_color
+            ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
+            col += 1
 
-        # Location
-        ws.cell(row, col).value = self.salah.location
-        ws.cell(row, col).fill = fill_color
-        ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
-        col += 1
+            # Location
+            ws.cell(row, col).value = self.salah.location
+            ws.cell(row, col).fill = fill_color
+            ws.cell(row, col).font = Font(bold=True) if self.salah.is_juma else Font(bold=False)
+            col += 1
 
         return col
 

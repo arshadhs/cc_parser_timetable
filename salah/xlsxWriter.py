@@ -46,7 +46,7 @@ def writer(wbTable, year, usage, hideColumns):
 
         # Add Salah header
 
-        # Header - web (2 rows every month)
+        # Header - web (top row)
         if (date.day == 1) and (date.month == 1) and usage == "web":
             # id, date, day
             col = 1
@@ -151,7 +151,7 @@ def writer(wbTable, year, usage, hideColumns):
                 cell.border = thin_border
             #ws.cell(column=2).border = thin_border
 
-    outFile = 'Cambourne_salah_timetable_'+year+'.xlsx'
+    outFile = 'docs\CC_booking_'+year+'.xlsx'
     wb.save(outFile)
     print("\nWritten to", outFile)
     # if not_in_use(outFile):
