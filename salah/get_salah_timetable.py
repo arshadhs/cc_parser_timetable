@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""
+r"""
     Implements Logic to build up a Salah Planner using data from moonsighting (url or xlsx)
     
     e.g.

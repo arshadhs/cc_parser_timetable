@@ -77,7 +77,7 @@ def get_prayer_table_offline(year, filename):
             full_date_string = f"{date_string}"
 
             # Convert the string to a datetime object using strptime
-            print(full_date_string)
+#            print(full_date_string)
             date_obj = (parser.parse(full_date_string)).date() #datetime.strptime(full_date_string, '%Y-%b-%d %H:%M:%S').date()
             #date_obj = datetime.strptime(date_string, '%Y %b %d %a').date()
             if date_obj is not None:

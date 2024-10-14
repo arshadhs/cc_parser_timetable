@@ -50,7 +50,7 @@ def csvWriter(wbTable, year):
 #            print(data['date'])
 
             for salahK, salahV in salahData.items():
-#                print (salahK, salahV)
+                print (salahK, salahV)
                 if (salahK != "Sunrise"):
                     data[salahK.lower()] = salahV.start
                     data[salahK.lower() + '_con'] = salahV.jamat
@@ -58,6 +58,7 @@ def csvWriter(wbTable, year):
                 elif (salahK == "Sunrise"):
                     data[salahK.lower()] = salahV
 
+            print (data)
             writer.writerow(data)
             
     print("\nWritten to", outFile)
