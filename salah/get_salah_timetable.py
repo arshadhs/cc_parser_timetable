@@ -6,7 +6,6 @@
     e.g.
     python get_salah_timetable.py --year 2025 --file docs\salah2025.xlsx --usage web hide
 """
-
 __author__      = "Mohammad Azim Khan, Arshad H. Siddiqui"
 __copyright__   = "Free to all"
 
@@ -105,7 +104,8 @@ def main():
 
     # using config file
     ramadan_start, ramadan_end = salahUtils.get_config("config.ini", args.year)
-    print(f"Ramadan in {args.year} starts on {ramadan_start} and ends on {ramadan_end}")
+    print(f"Ramadan Start ({args.year}): {ramadan_start}")
+    print(f"Ramadan End ({args.year}): {ramadan_end}")
 
     # If the filename is supplied fetch the data from file, else from URL
     if args.filename is not None:
@@ -128,12 +128,13 @@ def main():
     validateJamatTime(salahCalculatedTable)
 
     # Generate the xlsx
-    wbTable = workbook_gen(salahCalculatedTable)
-    xlsxWriter.not_in_use(args.filename)
-    xlsxWriter.writer(wbTable, args.year, args.usage, hideColumns)
+    if (args.usage == "booking"):
+        wbTable = workbook_gen(salahCalculatedTable)
+        xlsxWriter.not_in_use(args.filename)
+        xlsxWriter.writer(wbTable, args.year, args.usage, hideColumns)
 
     if (args.usage == "web"):
-        csvWriter.csvWriter(wbTable, args.year)
+        csvWriter.csvWriter(salahCalculatedTable, args.year)
 
 if __name__ == '__main__':
     main()
