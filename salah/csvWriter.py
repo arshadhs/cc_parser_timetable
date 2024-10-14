@@ -22,23 +22,20 @@ def csvWriter(wbTable, year):
 
     #print(wbTable)
 
-    file_path = 'time_cc.csv'
+    outFile = 'Cambourne_web_'+year+'.csv'
 
     header = ['id', 'date', 'fajr', 'sunrise', 'fajr_con', 'fajr_loc', 'dhuhr', 'dhuhr_con', 'dhuhr_loc', 'asr', 'asr_con', 'asr_loc', 'maghrib', 'maghrib_con', 'maghrib_loc', 'isha', 'isha_con', 'isha_loc', 'arabic_date_text']
     # Write dictionary to CSV file
-    with open(file_path, 'w', newline='') as csvfile:
+    with open(outFile, 'w', newline='') as csvfile:
         fieldnames = ['Name', 'Age', 'City']
         writer = csv.DictWriter(csvfile, fieldnames=header)
         writer.writeheader()
-        
-
-        print(f'Dictionary data exported to CSV file {file_path}')
 
         data = {}
 
         # # Add each day as rows
         for serial_no, (date, salahData) in enumerate(wbTable['schedule'].items(), start=1):
-            print(salahData)
+            #print(salahData)
             # week_day = date.strftime('%a')
             # is_juma = week_day == 'Fri'
 
@@ -50,13 +47,20 @@ def csvWriter(wbTable, year):
 
             #col += 1                                                # date
             data['date'] = date.strftime('%Y-%m-%d')
+#            print(data['date'])
 
-            #col += 1                                                # values - start, booking, jamat, location (fill the value and style / colour etc.)
-            for salah in salahData.values():
-                print (salah)
-            # row += 1
+            for salahK, salahV in salahData.items():
+#                print (salahK, salahV)
+                if (salahK != "Sunrise"):
+                    data[salahK.lower()] = salahV.start
+                    data[salahK.lower() + '_con'] = salahV.jamat
+                    data[salahK.lower() + '_loc'] = salahV.location
+                elif (salahK == "Sunrise"):
+                    data[salahK.lower()] = salahV
+
             writer.writerow(data)
-    print("\nWritten to", file_path)
+            
+    print("\nWritten to", outFile)
 
 
     # Values (we.cell(row,col)) - Start, Booking, Jamat, Location (Fill the value and style / colour etc.)
