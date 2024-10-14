@@ -36,7 +36,7 @@ class Salah(object):
 
     # __str__ method to customize how the object is printed
     def __str__(self):
-        return f"Salah(name={self.name}, date={self.date}, jamat={self.jamat})"
+        return f"Salah(name={self.name}, date={self.date}, jamat={self.jamat}, location={self.location})"
 
     def get_jamat_time(self):
         hour = int(self.start.strftime('%H'))
@@ -44,6 +44,10 @@ class Salah(object):
         return self.set_jamat_time(hour, min)
 
     def set_jamat_time(self, hour, min):
+
+        # Fajr - jamat_time
+        if self.name == "Fajr":
+            return self.get_fajr_jamat_time(hour, min)
 
         # Jum'ah (Friday and Dhuhr) - jamat_time
         if self.name == "Dhuhr":
@@ -63,13 +67,15 @@ class Salah(object):
             return ""
 
         # "Maghrib" - jamat_time
-        # Before 6 pm, then no congregation or booking
-        # Ramadan, then no congregation or booking
         if self.name == "Maghrib":
+            # Ramadan, then no congregation or booking
             if (self.date >= self.ramadan_start and self.date <= self.ramadan_end):
                 return ""
-            if(int(hour) < 18):
-                return ""
+            # Before 6 pm, then no congregation or booking
+            # if(int(hour) < 18):
+                # return ""
+            if (int(hour) == 15):
+                return datetime.time(16, 00, 00)
 
         # Isha - jamat_time
         #   If the start time is before 19:51, set to 20:05:00
@@ -82,11 +88,7 @@ class Salah(object):
             else: # Start of next quarter of the hour
                 return (salahUtils.add_and_ceil_dt(self.start, 0, 15))
 
-        # Fajr - jamat_time
-        if self.name == "Fajr":
-            return self.get_fajr_jamat_time(hour, min)
-
-        # Maghrib - jamat_time
+        # Maghrib - jamat_time and other fall backs)
         #print("Fallback, why am I here? : Booking time: ", self.date, self.name)
         return (salahUtils.add_and_ceil_dt(self.start, 0, 15))
 
@@ -230,9 +232,7 @@ def recalculate_jamat_time(salahTable, dstDates):
         if (saturdayDstSalah): # DST Transition
             Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = saturdayDstSalah.values()
             if date in dstDates:
-                print(date, saturdayDstDate, sundayDate, time['Fajr'])
                 resetDstJamatTime(salahTable, date)
-                print(date, saturdayDstDate, sundayDate, time['Fajr'])
 
             time['Fajr'].jamat = saturdayDstSalah['Fajr'].jamat
             time['Fajr'].booking_start = saturdayDstSalah['Fajr'].booking_start
