@@ -8,7 +8,8 @@ __author__      = "Arshad H. Siddiqui"
 __copyright__   = "Free to all"
 
 import datetime
-import salahUtils
+
+import utils
 
 def validateJamatTime(salahTable):
 
@@ -24,7 +25,7 @@ Validating:
     for row, (date, time) in enumerate(salahTable['schedule'].items(), start=1): # For each day in the year
 
         # Fajr jamat time difference from start
-        diffInMin = salahUtils.diff_in_minutes(time['Fajr'].jamat, time['Fajr'].start)
+        diffInMin = utils.diff_in_minutes(time['Fajr'].jamat, time['Fajr'].start)
 
         if (diffInMin < 5):
            print("Error:", date, time['Fajr'].name,
@@ -42,20 +43,20 @@ Validating:
 
 
         # Fajr jamat time gap from Sunrise
-        diffInMin = salahUtils.diff_in_minutes(time['Fajr'].sunrise, time['Fajr'].jamat)
+        diffInMin = utils.diff_in_minutes(time['Fajr'].sunrise, time['Fajr'].jamat)
 
-        if (diffInMin < 37):   #(salahUtils.reduce_time_by_minutes_dt(time['Fajr'].sunrise, 37)) < time['Fajr'].jamat):
+        if (diffInMin < 37):   #(utils.reduce_time_by_minutes_dt(time['Fajr'].sunrise, 37)) < time['Fajr'].jamat):
            print("Error (sunrise):", date, time['Fajr'].name,
                    time['Fajr'].start,
                    time['Fajr'].jamat,
                    time['Fajr'].sunrise,
-                   salahUtils.diff_in_minutes(time['Fajr'].sunrise, time['Fajr'].jamat))
-        # elif (diffInMin < 45):   #(salahUtils.reduce_time_by_minutes_dt(time['Fajr'].sunrise, 37)) < time['Fajr'].jamat):
+                   utils.diff_in_minutes(time['Fajr'].sunrise, time['Fajr'].jamat))
+        # elif (diffInMin < 45):   #(utils.reduce_time_by_minutes_dt(time['Fajr'].sunrise, 37)) < time['Fajr'].jamat):
            # print("Warning (sunrise):", date, time['Fajr'].name,
                    # time['Fajr'].start,
                    # time['Fajr'].jamat,
                    # time['Fajr'].sunrise,
-                   # salahUtils.diff_in_minutes(time['Fajr'].sunrise, time['Fajr'].jamat))
+                   # utils.diff_in_minutes(time['Fajr'].sunrise, time['Fajr'].jamat))
 
         # Maghrib jamat time is after start time
         if (time['Maghrib'].jamat):

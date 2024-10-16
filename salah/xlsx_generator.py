@@ -9,7 +9,8 @@ __copyright__   = "Free to all"
 
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
-from salah import Salah
+
+from salah_object import Salah
 
 COLOUR_BLUE = "add8e6"
 COLOR_P_BLUE = "1e7ba0"

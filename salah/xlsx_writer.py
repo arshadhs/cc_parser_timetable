@@ -15,11 +15,11 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.styles.borders import Border, Side
 
-import salahUtils
+import utils
 
-from moonsighting import get_prayer_table, get_prayer_table_offline
-from salah import Salah, recalculate_jamat_time
-from salahWorkBookGen import SalahWorkBook, FajrSalahWorkBook
+from moon_sighting import get_prayer_table, get_prayer_table_offline
+from salah_object import Salah, recalculate_jamat_time
+from xlsx_generator import SalahWorkBook, FajrSalahWorkBook
 from validator import validateJamatTime
 
 COLOUR_BLUE = "add8e6"
@@ -151,7 +151,7 @@ def writer(wbTable, year, usage, hideColumns):
                 cell.border = thin_border
             #ws.cell(column=2).border = thin_border
 
-    outFile = 'docs\CC_booking_'+year+'.xlsx'
+    outFile = 'docs\cc_booking_'+year+'.xlsx'
     wb.save(outFile)
     print("\nWritten to", outFile)
     # if not_in_use(outFile):

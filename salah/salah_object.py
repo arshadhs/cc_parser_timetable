@@ -15,7 +15,7 @@ from dateutil import relativedelta
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
-import salahUtils
+import utils
 
 from ramadan_dates import get_ramadan_dates
 
@@ -28,7 +28,7 @@ class Salah(object):
         self.has_jamat = has_jamat
         self.sunrise = self.details['Sunrise']
         self.week_day = date.strftime('%a')
-        self.ramadan_start, self.ramadan_end = salahUtils.get_config("config.ini", int(self.date.strftime('%Y')))
+        self.ramadan_start, self.ramadan_end = utils.get_config("config.ini", int(self.date.strftime('%Y')))
         self.location = str(self.get_location())
         self.jamat = self.get_jamat_time() # str(self.get_jamat_time())
         self.booking_start, self.booking_end = self.get_booking_time_slot()
@@ -84,13 +84,13 @@ class Salah(object):
             if (int(hour) == 19 and min <= 50) or int(hour) < 19:
                     return datetime.time(20, 5, 00)
             elif (int(hour) == 22 and min >= 30):
-                    return (salahUtils.add_and_ceil_dt(self.start, 0, 5))
+                    return (utils.add_and_ceil_dt(self.start, 0, 5))
             else: # Start of next quarter of the hour
-                return (salahUtils.add_and_ceil_dt(self.start, 0, 15))
+                return (utils.add_and_ceil_dt(self.start, 0, 15))
 
         # Maghrib - jamat_time and other fall backs)
         #print("Fallback, why am I here? : Booking time: ", self.date, self.name)
-        return (salahUtils.add_and_ceil_dt(self.start, 0, 15))
+        return (utils.add_and_ceil_dt(self.start, 0, 15))
 
     def get_fajr_jamat_time(self, hour, min):
         fajr_sunrise_hour = int(self.sunrise.strftime('%H'))
@@ -140,7 +140,7 @@ class Salah(object):
             return tm
 
         else:
-            tm = (salahUtils.reduce_and_floor_dt(self.sunrise, 46, 15))
+            tm = (utils.reduce_and_floor_dt(self.sunrise, 46, 15))
             return tm
 
     def get_booking_time_slot(self):
@@ -170,7 +170,7 @@ class Salah(object):
         else:
             booking_duration = 30
 
-        end_time = salahUtils.increment_time_by_minutes_dt(start_time, booking_duration)
+        end_time = utils.increment_time_by_minutes_dt(start_time, booking_duration)
         #(datetime.datetime.combine(datetime.date(1,1,1), start_time) + datetime.timedelta(minutes = booking_duration)).time()
 
         return start_time, end_time

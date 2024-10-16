@@ -1,10 +1,21 @@
+#!/usr/bin/env python
+r"""
+    xlsx readers    
+"""
+
+__author__      = "Arshad H. Siddiqui"
+__copyright__   = "Free to all"
+
+
 import json
-from typing import OrderedDict
-from datetime import datetime
 import requests
 import xmltodict
+
+from typing import OrderedDict
+from datetime import datetime
 from openpyxl import load_workbook, Workbook
 from dateutil import parser
+
 
 def get_prayer_table(year):
     url = 'https://www.moonsighting.com/praytable.php'
@@ -26,6 +37,7 @@ def get_prayer_table(year):
         schedule[date] = OrderedDict(Fajr=Fajr, Sunrise=Sunrise, Dhuhr=Dhuhr, Asr=Asr, Maghrib=Maghrib, Isha=Isha)
     data['schedule'] = schedule
     return data
+
 
 def _get_sheet_from_hdr(wb, headers):
     for sheet_name in wb.sheetnames:
@@ -53,13 +65,14 @@ def _get_sheet_from_hdr(wb, headers):
     print('Failed to find the xls with timing information')
     return None
 
-def get_donation_sheet(filename, year):
+
+def get_sheet(filename, year):
     iwb = load_workbook(filename, read_only=True)
     return _get_sheet_from_hdr(iwb, {year, 'Fajr', 'Sunrise', 'Dhuhr', 'Asr(H)', 'Maghrib', 'Isha'})
 
 
 def get_prayer_table_offline(year, filename):
-    sheet = get_donation_sheet(filename, year)
+    sheet = get_sheet(filename, year)
 
 #    print ("sheet: ", type(sheet))
     schedule = OrderedDict()

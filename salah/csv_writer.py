@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""
+r"""
     xlsx writer
 """
 
@@ -11,18 +11,18 @@ import datetime
 import math
 import csv
 
-import salahUtils
+import utils
 
-from moonsighting import get_prayer_table, get_prayer_table_offline
-from salah import Salah, recalculate_jamat_time
-from salahWorkBookGen import SalahWorkBook, FajrSalahWorkBook
+from moon_sighting import get_prayer_table, get_prayer_table_offline
+from salah_object import Salah, recalculate_jamat_time
+from xlsx_generator import SalahWorkBook, FajrSalahWorkBook
 from validator import validateJamatTime
 
 def csvWriter(wbTable, year):
 
     #print(wbTable)
 
-    outFile = 'docs\CC_web_'+year+'.csv'
+    outFile = r'docs\cc_web_'+year+'.csv'
 
     header = ['id', 'date', 'fajr', 'sunrise', 'fajr_con', 'fajr_loc', 'dhuhr', 'dhuhr_con', 'dhuhr_loc', 'asr', 'asr_con', 'asr_loc', 'maghrib', 'maghrib_con', 'maghrib_loc', 'isha', 'isha_con', 'isha_loc', 'arabic_date_text']
     # Write dictionary to CSV file
@@ -47,10 +47,10 @@ def csvWriter(wbTable, year):
 
             #col += 1                                                # date
             data['date'] = date.strftime('%Y-%m-%d')
-#            print(data['date'])
+            #print(data['date'])
 
             for salahK, salahV in salahData.items():
-                print (salahK, salahV)
+                #print (salahK, salahV)
                 if (salahK != "Sunrise"):
                     data[salahK.lower()] = salahV.start
                     data[salahK.lower() + '_con'] = salahV.jamat
@@ -58,7 +58,7 @@ def csvWriter(wbTable, year):
                 elif (salahK == "Sunrise"):
                     data[salahK.lower()] = salahV
 
-            print (data)
+            #print (data)
             writer.writerow(data)
             
     print("\nWritten to", outFile)

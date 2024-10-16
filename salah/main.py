@@ -18,14 +18,14 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.styles.borders import Border, Side
 
-import salahUtils
+import utils
 
-from moonsighting import get_prayer_table, get_prayer_table_offline
-from salah import Salah, recalculate_jamat_time
-from salahWorkBookGen import SalahWorkBook, FajrSalahWorkBook
+from moon_sighting import get_prayer_table, get_prayer_table_offline
+from salah_object import Salah, recalculate_jamat_time
+from xlsx_generator import SalahWorkBook, FajrSalahWorkBook
 from validator import validateJamatTime
-import xlsxWriter #import writeXlsx
-import csvWriter
+import xlsx_writer #import writeXlsx
+import csv_writer
 
 COLOUR_BLUE = "add8e6"
 # COLOR_P_BLUE = "1e7ba0"
@@ -104,7 +104,7 @@ def main():
     # print(f"Ramadan in {args.year} starts on {ramadan_start} and ends on {ramadan_end}")
 
     # using config file
-    ramadan_start, ramadan_end = salahUtils.get_config("config.ini", args.year)
+    ramadan_start, ramadan_end = utils.get_config("config.ini", args.year)
     print(f"Ramadan Start ({args.year}): {ramadan_start}")
     print(f"Ramadan End ({args.year}): {ramadan_end}")
 
@@ -122,7 +122,7 @@ def main():
 
     # Add booking data to moon sighting data
     salahBookingTable = salah_gen(moonSightTable)
-    dstDates = salahUtils.getDSTtransitionDates(int(args.year))
+    dstDates = utils.getDSTtransitionDates(int(args.year))
     salahCalculatedTable = salah_calculator(salahBookingTable, dstDates)
 
     # Validate the calculated booking data
@@ -131,11 +131,11 @@ def main():
     # Generate the xlsx
     if (args.usage == "booking"):
         wbTable = workbook_gen(salahCalculatedTable)
-        xlsxWriter.not_in_use(args.filename)
-        xlsxWriter.writer(wbTable, args.year, args.usage, hideColumns)
+        xlsx_writer.not_in_use(args.filename)
+        xlsx_writer.writer(wbTable, args.year, args.usage, hideColumns)
 
     if (args.usage == "web"):
-        csvWriter.csvWriter(salahCalculatedTable, args.year)
+        csv_writer.csvWriter(salahCalculatedTable, args.year)
 
 if __name__ == '__main__':
     main()
