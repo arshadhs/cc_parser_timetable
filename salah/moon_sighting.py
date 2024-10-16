@@ -1,9 +1,21 @@
+#!/usr/bin/env python
+r"""
+    xlsx readers    
+"""
+
+__author__      = "Arshad H. Siddiqui"
+__copyright__   = "Free to all"
+
+
 import json
 import requests
 import xmltodict
+
 from typing import OrderedDict
 from datetime import datetime
 from openpyxl import load_workbook, Workbook
+from dateutil import parser
+
 
 def get_prayer_table(year):
     url = 'https://www.moonsighting.com/praytable.php'
@@ -14,7 +26,6 @@ def get_prayer_table(year):
     start = response.text.find('<div')
     end = response.text.rfind('</div>')
     xml_text = response.text[start:end+len('</div>')]
-#    print("xml_text: ", response.text)
     elements = xmltodict.parse(xml_text)
     header = elements['div']['table']['thead']['tr']['th']
     header[0] = 'Date'
@@ -27,18 +38,23 @@ def get_prayer_table(year):
     data['schedule'] = schedule
     return data
 
+
 def _get_sheet_from_hdr(wb, headers):
     for sheet_name in wb.sheetnames:
         sheet = wb[sheet_name]
+
         for row in sheet.iter_rows(min_row=1, max_col=7, max_row=1):
             header = []
 
             for cell in row:
                 # print (cell.value)
-                val = str(int(cell.value)) if isinstance(cell.value, float) else str(cell.value)
-                header.append(val)
+                # print (type(cell.value))
+                #val = cell.value if not isinstance (cell.value, float) else int(cell.value) 
+                header.append(str(cell.value))
             break               
 
+        # print (headers)
+        # print(header)
         if set(header).issuperset(headers):
 #            print(f"Found xls '{sheet_name}'")
             return sheet
@@ -49,13 +65,14 @@ def _get_sheet_from_hdr(wb, headers):
     print('Failed to find the xls with timing information')
     return None
 
-def get_donation_sheet(year, filename):
+
+def get_sheet(filename, year):
     iwb = load_workbook(filename, read_only=True)
-    return _get_sheet_from_hdr(iwb, {str(year), 'Fajr', 'Sunrise', 'Dhuhr', 'Asr(H)', 'Maghrib', 'Isha'})
+    return _get_sheet_from_hdr(iwb, {year, 'Fajr', 'Sunrise', 'Dhuhr', 'Asr(H)', 'Maghrib', 'Isha'})
 
 
 def get_prayer_table_offline(year, filename):
-    sheet = get_donation_sheet(year, filename)
+    sheet = get_sheet(filename, year)
 
 #    print ("sheet: ", type(sheet))
     schedule = OrderedDict()
@@ -68,22 +85,22 @@ def get_prayer_table_offline(year, filename):
         for row in sheet.iter_rows(min_row=2, max_col=7, values_only=True):
 
             date_string, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = row[:7]
-#            print (row)
-
+            #print (row)
             # Combine the year with the date string
-            full_date_string = date_string# f"{year} {date_string}"
+            full_date_string = f"{date_string}"
 
             # Convert the string to a datetime object using strptime
-#            print("full_date_string: ", full_date_string)
-            date_obj = full_date_string.date()#datetime.strptime(full_date_string, '%Y %b %d %a').date()
-
-            schedule[date_obj] = OrderedDict(
-                                    Fajr=datetime.strptime(str(Fajr), '%H:%M:%S').time(),
-                                    Sunrise=datetime.strptime(str(Sunrise), '%H:%M:%S').time(),
-                                    Dhuhr=datetime.strptime(str(Dhuhr), '%H:%M:%S').time(),
-                                    Asr=datetime.strptime(str(Asr), '%H:%M:%S').time(),
-                                    Maghrib=datetime.strptime(str(Maghrib), '%H:%M:%S').time(),
-                                    Isha=datetime.strptime(str(Isha), '%H:%M:%S').time())
+#            print(full_date_string)
+            date_obj = (parser.parse(full_date_string)).date() #datetime.strptime(full_date_string, '%Y-%b-%d %H:%M:%S').date()
+            #date_obj = datetime.strptime(date_string, '%Y %b %d %a').date()
+            if date_obj is not None:
+                schedule[date_obj] = OrderedDict(
+                                        Fajr=datetime.strptime(str(Fajr), '%H:%M:%S').time(),
+                                        Sunrise=datetime.strptime(str(Sunrise), '%H:%M:%S').time(),
+                                        Dhuhr=datetime.strptime(str(Dhuhr), '%H:%M:%S').time(),
+                                        Asr=datetime.strptime(str(Asr), '%H:%M:%S').time(),
+                                        Maghrib=datetime.strptime(str(Maghrib), '%H:%M:%S').time(),
+                                        Isha=datetime.strptime(str(Isha), '%H:%M:%S').time())
 
     # for key, value in (schedule).items():
         # print ("key: ", key)
@@ -98,3 +115,4 @@ def get_prayer_table_offline(year, filename):
 
     data['schedule'] = schedule
     return data
+
