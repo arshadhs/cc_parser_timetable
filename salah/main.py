@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 r"""
-    Implements Logic to build a Salah Planner using data from moonsighting (URL or xlsx).
+    Implements Logic to build up a Salah Planner using data from moonsighting (url or xlsx)
     
-    Usage example:
-    python get_salah_timetable.py --year 2025 --file docs/salah2025.xlsx --usage web
-    C:\GitHub\cc\salah>python get_salah_timetable.py --year 2025 --file docs/salah2025.xlsx --usage booking hide
+    Usage:
+    python main.py --year 2025 --file docs\salah2025.xlsx --usage web
+    C:\GitHub\cc\salah>python main.py --year 2025 --file docs\salah2025.xlsx --usage booking hide
 """
 
-__author__ = "Mohammad Azim Khan, Arshad H. Siddiqui"
-__copyright__ = "Free to all"
+__author__      = "Mohammad Azim Khan, Arshad H. Siddiqui"
+__copyright__   = "Free to all"
 
 import datetime
 import argparse
@@ -26,12 +26,10 @@ from salah_object import Salah, recalculate_jamat_time
 from xlsx_generator import SalahWorkBook, FajrSalahWorkBook
 from validator import validateJamatTime
 
-
 COLOUR_BLUE = "add8e6"
 COLOUR_GREY = "dbdbdb"
 COLOR_L_GREY = "6e6e6e"
 
-# Create Salah object for each prayer time in the timetable
 def salah_gen(table):
     """
     Builds a Salah object for each prayer time in the timetable.
@@ -55,7 +53,7 @@ def salah_gen(table):
 #    print (table)
     return table
 
-# Calculate and adjust Salah times based on daylight saving time (DST)
+
 def salah_calculator(salahTable, dstDates):
     """
     Recalculates Jamat times for Salah objects based on DST adjustments.
@@ -64,7 +62,6 @@ def salah_calculator(salahTable, dstDates):
     return salahTable # salahReCalcTable
 
 
-# Build the workbook cells for each prayer time in the timetable
 def workbook_gen(table):
     """
     Generates a workbook for Salah timetable data.

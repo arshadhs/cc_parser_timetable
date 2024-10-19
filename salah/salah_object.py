@@ -9,15 +9,14 @@ __copyright__   = "Free to all"
 
 import datetime
 import argparse
-
 from datetime import timedelta
 from dateutil import relativedelta
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
 import utils
-
 from ramadan_dates import get_ramadan_dates
+
 
 class Salah(object):
     def __init__(self, name, date, start, details, has_jamat=True):
@@ -30,7 +29,7 @@ class Salah(object):
         self.week_day = date.strftime('%a')
         self.ramadan_start, self.ramadan_end = utils.get_config("config.ini", int(self.date.strftime('%Y')))
         self.location = str(self.get_location())
-        self.jamat = self.get_jamat_time() # str(self.get_jamat_time())
+        self.jamat = self.get_jamat_time()
         self.booking_start, self.booking_end = self.get_booking_time_slot()
         self.is_juma = self.week_day.lower().startswith('fri')
 
@@ -41,55 +40,23 @@ class Salah(object):
     def get_jamat_time(self):
         hour = int(self.start.strftime('%H'))
         min = int(self.start.strftime('%M'))
-        return self.set_jamat_time(hour, min)
 
-    def set_jamat_time(self, hour, min):
-
-        # Fajr - jamat_time
-        if self.name == "Fajr":
+        if self.name == "Fajr": 
             return self.get_fajr_jamat_time(hour, min)
 
-        # Jum'ah (Friday and Dhuhr) - jamat_time
-        if self.name == "Dhuhr":
-            if self.week_day == "Fri":
-                self.location == "HUB"
-                if int(hour) == 13 and min > 8:
-                    return datetime.time(13, 15, 00)
-                elif int(hour) == 13:
-                    return datetime.time(13, 10, 00)
-                else:
-                    return datetime.time(13, 5, 00)
-            else:
-                return ""
+        if self.name == "Dhuhr":    # Jum'ah (Friday and Dhuhr)
+            return self.get_dhuhr_jamat_time(hour, min)
 
-        # Asr
         if self.name == "Asr":
             return ""
 
-        # "Maghrib" - jamat_time
         if self.name == "Maghrib":
-            # Ramadan, then no congregation or booking
-            if (self.date >= self.ramadan_start and self.date <= self.ramadan_end):
-                return ""
-            # Before 6 pm, then no congregation or booking
-            # if(int(hour) < 18):
-                # return ""
-            if (int(hour) == 15):
-                return datetime.time(16, 00, 00)
+            return self.get_maghrib_jamat_time(hour, min)
 
-        # Isha - jamat_time
-        #   If the start time is before 19:51, set to 20:05:00
-        #   If time is after 22:30, add 5 minutes delta, else 15 minutes
         if self.name == "Isha":
-            if (int(hour) == 19 and min <= 50) or int(hour) < 19:
-                    return datetime.time(20, 5, 00)
-            elif (int(hour) == 22 and min >= 30):
-                    return (utils.add_and_ceil_dt(self.start, 0, 5))
-            else: # Start of next quarter of the hour
-                return (utils.add_and_ceil_dt(self.start, 0, 15))
+            return self.get_isha_jamat_time(hour, min)
 
-        # Maghrib - jamat_time and other fall backs)
-        #print("Fallback, why am I here? : Booking time: ", self.date, self.name)
+        print("Error: fallback! why am I here? : Booking time: ", self.date, self.name)
         return (utils.add_and_ceil_dt(self.start, 0, 15))
 
     def get_fajr_jamat_time(self, hour, min):
@@ -143,8 +110,45 @@ class Salah(object):
             tm = (utils.reduce_and_floor_dt(self.sunrise, 46, 15))
             return tm
 
-    def get_booking_time_slot(self):
+    def get_dhuhr_jamat_time(self, hour, min):
+        if self.week_day == "Fri":
+            self.location == "HUB"
+            if int(hour) == 13 and min > 8:
+                return datetime.time(13, 15, 00)
+            elif int(hour) == 13:
+                return datetime.time(13, 10, 00)
+            else:
+                return datetime.time(13, 5, 00)
+        else:
+            return ""
 
+    def get_maghrib_jamat_time(self, hour, min):
+        # Ramadan, then no congregation or booking
+        if (self.date >= self.ramadan_start and self.date <= self.ramadan_end):
+            return ""
+        # Before 6 pm, then no congregation or booking
+        # if(int(hour) < 18):
+            # return ""
+        if (int(hour) == 15):
+            return datetime.time(16, 00, 00)
+
+        # Maghrib - jamat_time fall back)
+        #print("Booking time: ", self.date, self.name)
+        return (utils.add_and_ceil_dt(self.start, 0, 5))
+
+    def get_isha_jamat_time(self, hour, min):
+        '''
+        If the start time is before 19:51, set to 20:05:00
+        If time is after 22:30, add 5 minutes delta, else 15 minutes
+        '''
+        if (int(hour) == 19 and min <= 50) or int(hour) < 19:
+                return datetime.time(20, 5, 00)
+        elif (int(hour) == 22 and min >= 30):
+                return (utils.add_and_ceil_dt(self.start, 0, 5))
+        else: # Start of next quarter of the hour
+            return (utils.add_and_ceil_dt(self.start, 0, 15))
+
+    def get_booking_time_slot(self):
         if self.jamat == "":
             return None, None
 
@@ -189,11 +193,13 @@ class Salah(object):
         return ""
 
 
-# If it is Saturday, pick the max from the week so as not to have a Jamat before the start time
-# Use the Jamat time (and booking time) this week from Thursday
-#   Do not change if it is Ramadan dates
-#   Be careful when in the week with Day Light Saving transitioning
 def recalculate_jamat_time(salahTable, dstDates):
+    '''
+    If it is Saturday, pick the max from the week so as not to have a Jamat before the start time
+    Use the Jamat time (and booking time) this week from Thursday
+    Do not change if it is Ramadan dates
+    Be careful when in the week with Day Light Saving transitioning
+    '''
 #    print(type(salahTable))
 #    print("time.values(): ", type(salahTable.keys()), " : ", salahTable.values())
     
@@ -256,9 +262,11 @@ def recalculate_jamat_time(salahTable, dstDates):
     return salahTable
 
 
-# Every Saturday, check for Jamat times till Friday,
-# find the largest and reset the whole week (Sat to Fri) Jamat time (and booking start and end)
 def findMaxAndResetJamatTime(salahTable, startDate):
+    '''
+    Every Saturday, check for Jamat times till Friday,
+    find the largest and reset the whole week (Sat to Fri) Jamat time (and booking start and end)
+    '''
     saturdayDate = startDate #+ relativedelta.relativedelta(weekday=5)
     saturdaySalah = getSalahObject(salahTable, saturdayDate)
 
@@ -296,8 +304,10 @@ def findMaxAndResetJamatTime(salahTable, startDate):
                 dateSalah['Fajr'].booking_end = booking_endFajr
 
 
-# Update the Fajr time from DST Sunday to Friday
 def resetDstJamatTime(salahTable, dstSundayDate):
+    '''
+    Update the Fajr time from DST Sunday to Friday
+    '''
     # Fajr
     # jamatTimeFajr = sundaySalah['Fajr'].jamat
     # booking_startFajr = sundaySalah['Fajr'].booking_start
@@ -316,6 +326,7 @@ def resetDstJamatTime(salahTable, dstSundayDate):
             dateSalah['Fajr'].booking_start = sundaySalah['Fajr'].booking_start
             dateSalah['Fajr'].booking_end = sundaySalah['Fajr'].booking_end
 #            print("resetDstJamatTime: ", date, dateSalah['Fajr'].jamat)
+
 
 def getSalahObject(salahTable, jumpDate):
     for row, (date, time) in enumerate(salahTable['schedule'].items(), start=1):

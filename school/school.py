@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""school.py:
+r"""school.py:
     Input: 
         (1) Bank Statement - donations xlsx sheet,  
         (2) Reference Sheet, xlsx with names and references to search for
@@ -69,7 +69,8 @@ def get_donation_sheet(wb):
     return _get_sheet_from_hdr(wb, {'Date', 'Type', 'Description', 'Value', 'Balance', 'Account Name', 'Account Number'})
 
 def get_reference_sheet(wb):
-    return _get_sheet_from_hdr(wb, {'Parent', 'Account Name'})
+#    return _get_sheet_from_hdr(wb, {'Parent', 'Account Name'})
+    return _get_sheet_from_hdr(wb, {'Father', 'Reference', 'Child(ren)', 'Mother'})
 
 import csv
 
@@ -104,9 +105,13 @@ def process_bank_st(filename, start, end):
             #print(datetime.datetime.fromisoformat(str(timestamp)))
             
             # Date should fall in range
+#            print (timestamp)
+            if not timestamp:
+                break
             entry_time = datetime.date.fromisoformat(str(timestamp).split(' ')[0])
             if entry_time < start or entry_time > end:
                 continue
+            desc = str(desc) if isinstance(desc, float) else desc
             desc = [x.strip() for x in desc.split(',')]
 
             if not is_donor(row[:7]):
@@ -146,11 +151,19 @@ def process_reference_data(filename):
                 fname, ac_name, numOfChildren = row[:3]
 
                 reference_data[ac_name.lower()] = {'fname':fname, 'numOfChildren': int(numOfChildren)}
+#                print ("process_reference_data : ",  i, fname, ac_name, numOfChildren)
             else:
                 break
 
+        myKeys = list(reference_data.keys())
+        myKeys.sort()
+        #sorted_dict 
+        reference_data = {i: reference_data[i] for i in myKeys}
         print(process_reference_data.__name__ + " === END 1 ===")
         return reference_data
+    else:
+        print("Sheet Error: ", filename)
+
     print(process_reference_data.__name__ + " === END 2 ===")
     return None
 
@@ -179,6 +192,7 @@ def write_output(donors, reference_data, outPath):
     list_of_lists = [] 
     
     # Iterates over Name and Reference (data from reference sheet)
+    #print("write_output :: ", reference_data)
     for reference, ac_name in reference_data.items():
 #        print("reference_data ", reference, ac_name)
         fee_data = donors.get(reference.upper())
@@ -232,6 +246,7 @@ def write_output(donors, reference_data, outPath):
             list_of_lists.append(masterdata)
 
     # Output to xlsx
+    multiplier = 1
     for r in list_of_lists: 
         column = 0
         total = 0
@@ -248,7 +263,7 @@ def write_output(donors, reference_data, outPath):
             if column == 16:
                 ws.cell(row, column).value = total
             elif column == 17:               
-                amountToBePAid = 480 if numOfChildren == 1 else 900 if numOfChildren == 2 else 1080
+                amountToBePAid = 40 * multiplier if numOfChildren == 1 else 75 * multiplier if numOfChildren == 2 else 90 * multiplier
                 due = amountToBePAid - total                
                 ws.cell(row, column).value = due if due > 0 else 0
                 if (due > 0):
