@@ -124,8 +124,8 @@ class Salah(object):
 
     def get_maghrib_jamat_time(self, hour, min):
         # Ramadan, then no congregation or booking
-        if (self.date >= self.ramadan_start and self.date <= self.ramadan_end):
-            return ""
+        #if (self.date >= self.ramadan_start and self.date <= self.ramadan_end):
+        #    return ""
         # Before 6 pm, then no congregation or booking
         # if(int(hour) < 18):
             # return ""
