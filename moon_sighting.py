@@ -40,6 +40,7 @@ def get_prayer_table(year):
 
 
 def _get_sheet_from_hdr(wb, headers):
+    print(f"wb.sheetnames '{wb.sheetnames}'")
     for sheet_name in wb.sheetnames:
         sheet = wb[sheet_name]
 
@@ -50,8 +51,12 @@ def _get_sheet_from_hdr(wb, headers):
                 # print (cell.value)
                 # print (type(cell.value))
                 #val = cell.value if not isinstance (cell.value, float) else int(cell.value) 
-                header.append(str(cell.value))
-            break               
+
+                value = cell.value
+                if isinstance(value, float) and value.is_integer():
+                    value = int(value)
+                header.append(str(value))
+            break
 
         # print (headers)
         # print(header)
@@ -62,13 +67,24 @@ def _get_sheet_from_hdr(wb, headers):
             print (set(header).difference(headers))
             print (set(headers).difference(header))
 
-    print('Failed to find the xls with timing information')
+    print(f"Failed to find the xls with timing information '{sheet_name}'")
     return None
 
 
 def get_sheet(filename, year):
+    print(f"Loading xls '{filename}'")
     iwb = load_workbook(filename, read_only=True)
-    return _get_sheet_from_hdr(iwb, {year, 'Fajr', 'Sunrise', 'Dhuhr', 'Asr(H)', 'Maghrib', 'Isha'})
+    sheet = _get_sheet_from_hdr(
+        iwb,
+        {str(year), 'Fajr', 'Sunrise', 'Dhuhr', 'Asr(H)', 'Maghrib', 'Isha'}
+    )
+
+    if sheet is None:
+        raise ValueError(
+            f"Could not find prayer timetable sheet for year {year} in '{filename}'"
+        )
+
+    return sheet
 
 
 def get_prayer_table_offline(year, filename):
